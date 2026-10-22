@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server.js'
 // @ts-expect-error Node strip-types tests require the source extension.
+import { privateModeEnabled, privateSession } from './private-mode.ts'
+// @ts-expect-error Node strip-types tests require the source extension.
 import { needsTokenRefresh, refreshAccessToken, sessionWithRefresh } from './auth.ts'
 // @ts-expect-error Node strip-types tests require the source extension.
 import { forwardSessionCookie, grantCookieName, GRANT_COOKIE_PREFIX, isLoginId, SESSION_COOKIE_NAME } from './auth-protocol.ts'
@@ -15,6 +17,7 @@ export function withRequestSession(body: SessionHandler) {
     const cookies: SessionCookie[] = []
     let response: Response
     try {
+      if (privateModeEnabled()) return await body(request, privateSession())
       const incoming = request instanceof NextRequest ? request : new NextRequest(request.url, { headers: request.headers })
       const selector = incoming.cookies.get(SESSION_COOKIE_NAME)?.value
       const selectedName = isLoginId(selector) ? grantCookieName(selector) : undefined

@@ -56,10 +56,10 @@ test('durable sponsored credentials survive recovery without storing the server 
   t.after(() => { hook.deregister(); delete globalThis.trialCredentialRedis })
   const credentials = await import('../lib/turn-credential.ts')
   assert.equal(typeof credentials.readExecutionCredential, 'function', 'admission-bound funding is missing')
-  const previous = { secret: process.env.SESSION_SECRET, key: process.env.AI_GATEWAY_API_KEY, enabled: process.env.FX0_FREE_PROMPTS }
+  const previous = { secret: process.env.SESSION_SECRET, key: process.env.AI_GATEWAY_API_KEY, enabled: process.env.FX0_FREE_PROMPTS, mode: process.env.FX0_PRIVATE_MODE }
   Object.assign(process.env, { SESSION_SECRET: 'trial-test-session-password-long-enough', AI_GATEWAY_API_KEY: 'synthetic-server-key-never-store', FX0_FREE_PROMPTS: '1' })
   t.after(() => {
-    for (const [name, value] of Object.entries({ SESSION_SECRET: previous.secret, AI_GATEWAY_API_KEY: previous.key, FX0_FREE_PROMPTS: previous.enabled })) {
+    for (const [name, value] of Object.entries({ SESSION_SECRET: previous.secret, AI_GATEWAY_API_KEY: previous.key, FX0_FREE_PROMPTS: previous.enabled, FX0_PRIVATE_MODE: previous.mode })) {
       if (value === undefined) delete process.env[name]; else process.env[name] = value
     }
   })
@@ -69,6 +69,23 @@ test('durable sponsored credentials survive recovery without storing the server 
   assert.ok(raw && !raw.includes(process.env.AI_GATEWAY_API_KEY))
   assert.deepEqual(await credentials.readExecutionCredential('chat-a', 1), proof)
   assert.equal(await credentials.readExecutionCredential('chat-a'), null, 'unknown resumed turn cannot use the latest credential')
+  const { privateSession, PRIVATE_TOKEN } = await import('../lib/private-mode.ts')
+  const { gatewayFetch } = await import('../lib/gateway-session.ts')
+  const { unsealData } = await import('iron-session')
+  process.env.FX0_PRIVATE_MODE = '1'
+  assert.equal(trial.trialEnabled(), false, 'private mode cannot consume trial allowance')
+  await credentials.saveTurnCredential('private-chat', privateSession())
+  const privateSeal = values.get('test:credential:private-chat')
+  const privateStored = await unsealData(privateSeal, { password: process.env.SESSION_SECRET })
+  assert.equal(privateStored.accessToken, PRIVATE_TOKEN)
+  assert.equal(JSON.stringify(privateStored).includes(process.env.AI_GATEWAY_API_KEY), false)
+  const restored = await credentials.readExecutionCredential('private-chat')
+  const resumed = gatewayFetch({ gatewaySession: { ...restored, isLoggedIn: true } }, async (_url, init) => {
+    assert.equal(init.headers.get('authorization'), `Bearer ${process.env.AI_GATEWAY_API_KEY}`)
+    return Response.json({ ok: true })
+  })
+  assert.equal((await resumed('https://ai-gateway.vercel.sh/v4/ai/language-model', { method: 'POST' })).status, 200)
+  if (previous.mode === undefined) delete process.env.FX0_PRIVATE_MODE; else process.env.FX0_PRIVATE_MODE = previous.mode
   const paid = { userId: 'real-user', loginId: 'paid-login', accessToken: 'synthetic-user-token', teamId: 'team_paid', expiresAt: Date.now() + 3600000 }
   await credentials.saveTurnCredential('chat-a', paid, 2)
   assert.deepEqual(await credentials.readExecutionCredential('chat-a', 1), proof)

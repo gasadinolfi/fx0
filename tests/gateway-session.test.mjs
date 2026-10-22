@@ -1,6 +1,45 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { assertGatewaySession, assertGenerationCredential, bindGatewaySession, gatewayFetch, htmlFieldExtractor, RATE_LIMIT_ATTEMPTS } from '../lib/gateway-session.ts'
+import { privateSession, PRIVATE_TOKEN } from '../lib/private-mode.ts'
+
+test('private workspace uses the current server key, never persists it, and fails closed when disabled', async (t) => {
+  const previous = { mode: process.env.FX0_PRIVATE_MODE, key: process.env.AI_GATEWAY_API_KEY }
+  t.after(() => {
+    for (const [name, value] of [['FX0_PRIVATE_MODE', previous.mode], ['AI_GATEWAY_API_KEY', previous.key]]) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value
+    }
+  })
+  process.env.FX0_PRIVATE_MODE = '1'
+  process.env.AI_GATEWAY_API_KEY = 'private-key-first'
+  const credential = privateSession()
+  assert.equal(credential.accessToken, PRIVATE_TOKEN)
+  assert.equal(JSON.stringify(credential).includes('private-key-first'), false)
+  const calls = []
+  const request = gatewayFetch({ gatewaySession: credential }, async (_url, init) => {
+    calls.push(init.headers)
+    return Response.json({ ok: true })
+  })
+  for (let i = 0; i < 6; i++) {
+    await request('https://ai-gateway.vercel.sh/v4/ai/language-model', {
+      method: 'POST', headers: { 'ai-language-model-id': 'other/model', 'x-vercel-ai-gateway-team': 'team_old' }, body: '{}',
+    })
+  }
+  assert.equal(calls.length, 6)
+  assert.equal(calls[0].get('authorization'), 'Bearer private-key-first')
+  assert.equal(calls[0].has('x-vercel-ai-gateway-team'), false)
+  process.env.AI_GATEWAY_API_KEY = 'private-key-rotated'
+  await request('https://ai-gateway.vercel.sh/v4/ai/language-model', { method: 'POST', body: '{}' })
+  assert.equal(calls[6].get('authorization'), 'Bearer private-key-rotated')
+  await assert.rejects(request('https://example.com/v4/ai/language-model'), /cannot leave/i)
+  delete process.env.AI_GATEWAY_API_KEY
+  await assert.rejects(request('https://ai-gateway.vercel.sh/v4/ai/language-model'), /Private mode requires/)
+  assert.throws(privateSession, /AI_GATEWAY_API_KEY/)
+  process.env.AI_GATEWAY_API_KEY = 'private-key-rotated'
+  process.env.FX0_PRIVATE_MODE = '0'
+  await assert.rejects(request('https://ai-gateway.vercel.sh/v4/ai/language-model'), /Private mode requires/)
+  assert.equal(calls.length, 7)
+})
 
 const session = (extra = {}) => ({ userId: 'user-a', email: 'a@example.com', name: 'A', isLoggedIn: true,
   loginId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', loginAt: 1_000,

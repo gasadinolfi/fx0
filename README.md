@@ -136,6 +136,22 @@ Neon Postgres holds accounts, who owns each chat, finished turns and every desig
 
 ## Run it locally
 
+### Without OAuth (private workspace)
+
+Set `FX0_PRIVATE_MODE=1` and `AI_GATEWAY_API_KEY` in `.env.local` to use a single
+shared workspace without signing in. OAuth client credentials are not required.
+There is no five-prompt trial limit; every model call is charged to the server
+key. The key stays on the server, including when a worker resumes a turn.
+
+Keep `APP_URL`, `SESSION_SECRET`, `DATABASE_URL` and `KV_REST_API_URL/TOKEN`
+configured, run `npm run db:migrate`, and restart the app after changing the env.
+Everyone who can reach the instance can read and change the same chats and spend
+the key's credits. Use this mode locally or behind access protection. Remove
+`FX0_PRIVATE_MODE` to restore OAuth; the private workspace's chats remain separate
+from OAuth accounts. Team selection and sign-out do not apply in private mode.
+
+### With OAuth
+
 You'll need Node.js 24 and three services:
 
 1. A [Sign in with Vercel](https://vercel.com/docs/sign-in-with-vercel) app with the scopes `openid profile email offline_access` and the permissions AI Gateway: Use and Team: Read Only. Add `http://localhost:3000/api/auth/callback` as a callback URL. Don't leave out `offline_access`: without it, Vercel sends no refresh token and sign-in fails.

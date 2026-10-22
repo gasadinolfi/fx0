@@ -1,4 +1,6 @@
 import { Redis } from '@upstash/redis'
+// @ts-expect-error Node strip-types tests require the source extension.
+import { isPrivateCredential } from './private-mode.ts'
 import { sealData, unsealData } from 'iron-session'
 // @ts-expect-error Node strip-types tests require the source extension.
 import { AuthError, type AccountUser } from './accounts.ts'
@@ -16,7 +18,8 @@ export async function requireUserSession(): Promise<SessionData> {
 }
 
 export function publicUser(session: SessionData): AccountUser {
-  return { id: session.userId, name: session.name || session.email, email: session.email, picture: session.picture || null }
+  return { id: session.userId, name: session.name || session.email, email: session.email, picture: session.picture || null,
+    ...(isPrivateCredential(session) ? { privateMode: true as const } : {}) }
 }
 
 export interface GrantedTeam { teamId: string; teamSlug: string }

@@ -1,4 +1,5 @@
 import { sealData } from 'iron-session'
+import { privateModeEnabled } from '@/lib/private-mode'
 import { NextResponse, type NextRequest } from 'next/server'
 import { randomHandle, pkceChallenge } from '@/lib/auth-crypto'
 import { getSessionOptions } from '@/lib/secure-session'
@@ -7,6 +8,7 @@ import { logAuthFailure, requestOrigin, SIGN_IN_UNAVAILABLE_PATH, FLOW_COOKIE_NA
 export async function GET(request: NextRequest) {
   // Read first: request data keeps this handler out of the build's prerender.
   const reauth = request.nextUrl.searchParams.get('reauth') === 'true'
+  if (privateModeEnabled()) return new NextResponse(null, { status: 307, headers: { Location: '/', 'Cache-Control': 'no-store' } })
   try {
     const clientId = process.env.VERCEL_OAUTH_CLIENT_ID
     if (!clientId || !process.env.VERCEL_OAUTH_CLIENT_SECRET) throw new Error('OAuth is not configured')

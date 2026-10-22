@@ -472,6 +472,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   }
 
   async function signOut() {
+    if (user?.privateMode) return
     if (signOutPending.current) return
     signOutPending.current = true
     setSignOutStatus('pending')

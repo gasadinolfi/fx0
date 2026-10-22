@@ -7,9 +7,14 @@ import { MIN_GATEWAY_VALIDITY_MS } from './auth-protocol.ts'
 // @ts-expect-error Node strip-types tests require the source extension.
 import { redactSecrets } from './auth-crypto.ts'
 import type { TrialCredential } from './trial'
+// @ts-expect-error Node strip-types tests require the source extension.
+import { isPrivateCredential, privateGatewayKey } from './private-mode.ts'
 
 export function assertGatewaySession(session: SessionData | null, minimumValidity = 30_000): asserts session is SessionData {
   if (!session?.isLoggedIn || !session.userId || !session.accessToken) throw new AuthError()
+  if (isPrivateCredential(session)) {
+    try { privateGatewayKey() } catch { throw new AuthError(503, 'Private mode requires AI_GATEWAY_API_KEY') }
+  }
   if (!session.teamId?.startsWith('team_')) throw new AuthError(403, 'Reauthorize AI Gateway access')
   if (!Number.isFinite(session.expiresAt) || session.expiresAt <= Date.now() + minimumValidity) {
     throw new AuthError(503, 'Authentication needs renewal; retry shortly')
@@ -225,8 +230,13 @@ function transport(
     } else {
       assertGatewaySession(credential as SessionData | null)
       const userCredential = credential as SessionData
-      secret = userCredential.accessToken
-      headers.set('x-vercel-ai-gateway-team', userCredential.teamId!)
+      if (isPrivateCredential(userCredential)) {
+        secret = privateGatewayKey()
+        headers.delete('x-vercel-ai-gateway-team')
+      } else {
+        secret = userCredential.accessToken
+        headers.set('x-vercel-ai-gateway-team', userCredential.teamId!)
+      }
     }
     headers.set('authorization', `Bearer ${secret}`)
     const response = await fetcher(input, { ...init, headers, cache: 'no-store', redirect: 'error' })

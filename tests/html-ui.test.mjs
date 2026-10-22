@@ -107,6 +107,21 @@ test('signed-in first paint offers free prompts only for an eligible chat', () =
   }
 })
 
+test('private workspace first paint has a usable composer without OAuth or trial controls', (t) => {
+  t.mock.method(globalThis, 'fetch', () => assert.fail('private SSR must not fetch OAuth teams or credits'))
+  const markup = renderToStaticMarkup(createElement(TooltipProvider, null, createElement(ChatApp, {
+    account: resolved({ user: { id: 'private:workspace', name: 'Private workspace', email: 'private@localhost', picture: null, privateMode: true }, team: 'Private workspace', freePrompts: null }),
+    sidebar: resolved({ sessions: [], nextCursor: null }),
+    boot: resolved({ sessionId: 'draft', snapshot: { transcript: compactTranscript([], { artifactRevision: 0 }), summary: null }, now: 1, missing: false }),
+    preference: resolved({ sessionId: 'draft', model: 'openai/gpt-6', effort: '', fast: false }),
+    defaultModel: 'anthropic/claude-opus-5.5-fast',
+  })))
+  assert.match(markup, />Private workspace</)
+  assert.match(markup, /name="prompt"/)
+  assert.match(markup, />gpt-6</)
+  assert.doesNotMatch(markup, />Sign in<|>Sign out<|free prompts left|billing team/)
+})
+
 test('HTML-only first paint includes SSR profile, history, settings and design suggestions', (t) => {
   const fetch = t.mock.method(globalThis, 'fetch', () => assert.fail('SSR UI must not fetch identity or credits'))
   const markup = renderChat()

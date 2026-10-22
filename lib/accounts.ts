@@ -5,6 +5,7 @@ export interface AccountUser {
   email: string | null
   picture: string | null
   guest?: true
+  privateMode?: true
 }
 
 export class AuthError extends Error {

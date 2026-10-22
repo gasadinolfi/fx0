@@ -11,10 +11,11 @@ import { DEFAULT_VIEW } from '../components/chat-state'
 import { cookies, headers } from 'next/headers'
 import { getGuestSession, guestUser, remainingFreePrompts, trialEnabled } from '../lib/trial'
 import { claimGuestSessions } from '../lib/accounts'
+import { privateModeEnabled } from '../lib/private-mode'
 
 async function loadAccount(): Promise<AccountBoot> {
   await connection()
-  const guest = await getGuestSession()
+  const guest = privateModeEnabled() ? null : await getGuestSession()
   const freePrompts = trialEnabled() ? await remainingFreePrompts(await headers()).catch(() => null) : null
   try {
     const session = await requireUserSession()

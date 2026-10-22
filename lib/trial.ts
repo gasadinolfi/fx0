@@ -10,6 +10,8 @@ import { getSessionOptions } from './secure-session.ts'
 import { prefixed, redis } from './journal.ts'
 // @ts-expect-error Node strip-types tests require the source extension.
 import { FREE_PROMPTS } from './trial-policy.ts'
+// @ts-expect-error Node strip-types tests require the source extension.
+import { privateModeEnabled } from './private-mode.ts'
 
 export const GUEST_COOKIE = 'fx0_guest'
 const GUEST_TTL = 30 * 24 * 60 * 60
@@ -33,7 +35,7 @@ export interface TrialCredential {
 }
 
 export function trialEnabled(): boolean {
-  return process.env.FX0_FREE_PROMPTS === '1' && !!process.env.AI_GATEWAY_API_KEY
+  return !privateModeEnabled() && process.env.FX0_FREE_PROMPTS === '1' && !!process.env.AI_GATEWAY_API_KEY
 }
 
 export function newGuestSession(): GuestSession {

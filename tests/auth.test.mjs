@@ -52,6 +52,37 @@ const { POST: signout } = await import('../app/api/auth/signout/route.ts')
 const { GET: me } = await import('../app/api/auth/me/route.ts')
 const { AuthError } = await import('../lib/accounts.ts')
 
+test('private workspace needs no OAuth cookies, exposes no key and retains origin checks', async (t) => {
+  const previous = { mode: process.env.FX0_PRIVATE_MODE, key: process.env.AI_GATEWAY_API_KEY }
+  t.after(() => {
+    for (const [name, value] of [['FX0_PRIVATE_MODE', previous.mode], ['AI_GATEWAY_API_KEY', previous.key]]) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value
+    }
+  })
+  process.env.FX0_PRIVATE_MODE = '1'
+  process.env.AI_GATEWAY_API_KEY = 'private-test-key-never-exposed'
+  t.mock.method(globalThis, 'fetch', () => assert.fail('private authentication must not call OAuth'))
+  const request = new NextRequest('https://fx0.example/api/auth/me')
+  const response = await me(request)
+  const account = await response.json()
+  assert.equal(account.user.id, 'private:workspace')
+  assert.equal(account.user.privateMode, true)
+  assert.equal(JSON.stringify(account).includes(process.env.AI_GATEWAY_API_KEY), false)
+  assert.equal((await secure.getSessionFromRequest(request)).accessToken, 'fx0-private-server-key')
+  assert.deepEqual(await secure.getSessionForSignOut(request), {})
+  const route = withUserRoute(() => Response.json({ ok: true }))
+  const denied = await route(new Request('https://fx0.example/api/prompt', { method: 'POST', headers: { origin: 'https://evil.example' } }))
+  assert.equal(denied.status, 403)
+  const allowed = await route(new Request('https://fx0.example/api/prompt', { method: 'POST', headers: { origin: 'https://fx0.example' } }))
+  assert.equal(allowed.status, 200)
+  assert.match(allowed.headers.get('cache-control'), /private/)
+  assert.equal((await signin(new NextRequest('https://fx0.example/api/auth/signin'))).headers.get('location'), '/')
+  delete process.env.AI_GATEWAY_API_KEY
+  assert.equal((await me(request)).status, 503)
+  process.env.FX0_PRIVATE_MODE = '0'
+  assert.equal((await (await me(request)).json()).user, null)
+})
+
 const session = (extra = {}) => ({
   loginId: '11111111111111111111111111111111', loginAt: 1_750_000_000_000,
   userId: 'verified-sub', email: 'user@example.com', name: 'Test User', picture: 'https://example.com/avatar.png',

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { isPrivateCredential } from '../../../lib/private-mode'
 import { AuthError } from '../../../lib/accounts'
 import { listGatewayTeams, type GatewayTeam } from '../../../lib/auth'
 import { withUserRoute } from '../../../lib/route-auth'
@@ -23,6 +24,7 @@ async function gatewayTeams(accessToken: string): Promise<GatewayTeam[]> {
 // A failed listing is about Vercel's team API, not the fx0 session: answering 401/403
 // would make the client treat it as a lost grant and block sending.
 export const GET = withUserRoute(async (_request, { session }) => {
+  if (isPrivateCredential(session)) return Response.json({ teams: [], current: null })
   try {
     return Response.json({ teams: await gatewayTeams(session.accessToken), current: session.teamId ?? null })
   } catch {
@@ -32,6 +34,7 @@ export const GET = withUserRoute(async (_request, { session }) => {
 
 // Only a team Gateway accepts for this user's own token can be chosen.
 export const POST = withUserRoute(async (request, { session }) => {
+  if (isPrivateCredential(session)) throw new AuthError(403, 'Private mode uses the server Gateway key')
   const body = await request.json().catch(() => null) as { teamId?: unknown } | null
   const teams = await gatewayTeams(session.accessToken).catch(() => {
     throw new AuthError(502, 'Unable to verify team access. Try again.')
