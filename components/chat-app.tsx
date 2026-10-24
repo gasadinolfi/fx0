@@ -16,7 +16,6 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
-import Brand from './brand'
 import AccountMenu, { type AccountUser } from './account-menu'
 import { AUTH_REQUIRED_EVENT, AuthRouteError, fetchUi, readEventStream, signOutAccount } from './auth-ui'
 import { fastClick } from '../lib/fast-click'
@@ -42,7 +41,6 @@ import SidebarGestures, { type SidebarGestureControls } from './sidebar-gestures
 import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
-import SourceLink from './source-link'
 import {
   DEFAULT_VIEW,
   applyStreamItem,
@@ -1775,11 +1773,6 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
               : ''
           }`}
         >
-          {/* Below md the sidebar is a drawer, so the brand needs its own bar. */}
-          <div className="flex h-10 shrink-0 items-center border-b border-border px-4 md:hidden">
-            <Brand onHome={newDesign} />
-          </div>
-
           <header className="shrink-0 border-b border-border bg-background">
             <div className="flex h-12 items-center gap-1.5 px-4">
               <Button
@@ -2013,12 +2006,10 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
               onSignIn={openSignIn}
               onDraftInput={onComposerInput}
             />
-            {/* The account and the repo link live at the foot of the rail; with the
-                rail shut they sit at the foot of the conversation, in line with the prompt. */}
+            {/* With the rail shut, the account sits at the foot of the conversation. */}
             <footer aria-label="Conversation account" className="hidden border-t border-border bg-background px-3 py-2 md:[html.sidebar-collapsed_&]:block">
               <div className="mx-auto flex h-8 max-w-2xl items-center justify-between gap-2">
                 {accountRegion(false, 'top')}
-                <SourceLink />
               </div>
             </footer>
           </div>

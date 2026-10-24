@@ -3,9 +3,6 @@
 import { memo, useState, type ReactNode } from 'react'
 import type { SessionInfo } from '../lib/events'
 import AccountMenu, { type AccountUser } from './account-menu'
-import SourceLink from './source-link'
-import Brand from './brand'
-import HowItWorks from './how-it-works'
 import NewChat from './new-chat'
 import { fastClick } from '../lib/fast-click'
 import { ScrollArea } from './ui/scroll-area'
@@ -74,14 +71,6 @@ function Sidebar({
     <aside className="flex h-full w-[min(82vw,280px)] shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground [contain:layout] md:w-[var(--sidebar-expanded-width)]">
       {/* Text in this column starts 24px from the edge, like the composer's text: a
           12px gutter (px-3) plus 12px inside each row's highlight (px-3). */}
-      <div className="flex h-12 items-center justify-between gap-6 pl-6 pr-4.5">
-        <Brand onHome={onNew} />
-        <div className="flex items-center">
-          <SourceLink />
-          <HowItWorks />
-        </div>
-      </div>
-
       <div className="px-3 pt-3">
         <NewChat onNew={onNew} />
       </div>

@@ -5,7 +5,7 @@
 @theme inline {
   --animate-sidebar-drawer-in: sidebar-drawer-in 150ms ease;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-background-2: var(--surface-subtle);
@@ -149,7 +149,7 @@ body {
   min-height: 100%;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -294,7 +294,7 @@ select:not(:disabled) {
   border: 1px solid var(--border);
   background: var(--surface-hover);
   padding: 0.0625rem 0.3125rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.75rem;
 }
 .md pre {
