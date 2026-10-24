@@ -9,15 +9,20 @@ import { Skeleton } from './ui/skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from './ui/sheet'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import Markdown from './markdown'
+import SocialFormatPicker from './social-format-picker'
+import { SOCIAL_FORMATS, socialPrompt, validSocialSize, type SocialFormat } from '../lib/social-formats'
 
 export interface GbSelection { sessionId: string; campaignId: string | null }
 interface Props {
-  sessionId: string; busy: boolean; empty: boolean; enabled: boolean;
+  sessionId: string; busy: boolean; empty: boolean; enabled: boolean; hasDesign?: boolean;
+  onFormat?: (format: SocialFormat) => void;
   onContext: (selection: GbSelection) => void; onNew: () => void; onSend: (text: string) => unknown;
 }
-export default function GbWorkbench({ sessionId, busy, empty, enabled, onContext, onNew, onSend }: Props) {
+export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign = false, onFormat, onContext, onNew, onSend }: Props) {
   const [state, setState] = useState<GbWorkspace | null>(null)
   const [campaignId, setCampaignId] = useState('entender')
+  const [socialFormat, setSocialFormat] = useState<SocialFormat>(SOCIAL_FORMATS[0])
+  useEffect(() => { if (enabled) onFormat?.(socialFormat) }, [enabled, socialFormat, onFormat])
   const [loadedFor, setLoadedFor] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('guide')
@@ -116,9 +121,11 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, onContext
         </select>
         <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => panel('campaigns')}>Nueva campaña</Button>
       </div>
+      <div className="mt-3"><SocialFormatPicker value={socialFormat} onChange={value => { if (value) setSocialFormat(value) }} disabled={!ready || busy} /></div>
       {selected && <>
         {empty ? <div className="gb-intro py-7"><p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">{selected.page ? `Propuesta del manual · Página ${selected.page}` : 'Campaña propia'}</p><h2 className="max-w-lg text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{selected.title}</h2><p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground">{selected.message} {selected.objective}</p></div> : <p className="mt-3 text-xs text-muted-foreground">{selected.message}</p>}
-        <div className="mt-3 grid grid-cols-2 gap-2">{GB_ACTIONS.map((action, i) => <Button key={action.label} variant={i === 0 ? 'default' : 'outline'} disabled={!ready || busy} className="h-auto min-h-10 justify-start whitespace-normal text-left text-xs sm:text-sm" onClick={() => onSend(action.prompt)}>{action.label}<span className="ml-auto" aria-hidden="true">↗</span></Button>)}</div>
+        <div className="mt-3 grid grid-cols-2 gap-2">{GB_ACTIONS.map((action, i) => <Button key={action.label} variant={i === 0 ? 'default' : 'outline'} disabled={!ready || busy || !validSocialSize(socialFormat)} className="h-auto min-h-10 justify-start whitespace-normal text-left text-xs sm:text-sm" onClick={() => onSend(i < 2 ? socialPrompt(action.prompt, socialFormat) : action.prompt)}>{action.label}<span className="ml-auto" aria-hidden="true">↗</span></Button>)}</div>
+        {hasDesign && <Button variant="outline" size="sm" className="mt-3" disabled={!ready || busy || !validSocialSize(socialFormat)} onClick={() => onSend(socialPrompt("Adaptá la pieza visual actual al formato seleccionado.", socialFormat, true))}>Adaptar pieza a este formato</Button>}
         {selected.guideId !== state.activeGuideId && <div className="mt-3 flex flex-wrap items-center gap-2"><p className="text-xs text-muted-foreground">Esta campaña conserva una guía anterior.</p><Button variant="ghost" size="sm" disabled={saving || busy} onClick={() => void mutate({ action: 'adopt', campaignId })}>Adoptar guía vigente</Button></div>}
       </>}
     </>}

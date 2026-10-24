@@ -207,3 +207,11 @@ Paid model requests carry the sender's OAuth token only to AI Gateway. Between r
 It requires the existing authentication/Gateway configuration, `DATABASE_URL`, and `KV_REST_API_URL` / `KV_REST_API_TOKEN`. No additional database migration is needed: workspace versions, sources and campaign bindings use account-scoped Redis keys. Uploads prepare an editable proposal; acceptance creates a new guide version. Existing campaigns adopt it only explicitly. HTML references are extracted as text or downloaded as sandboxed attachments. PDF uploads require extractable text (no OCR); images are PNG/JPEG/WebP, up to 700 KB.
 
 Run `npm run test:gb` for workspace, upload, UI and route-security tests. Video requests produce scripts, and the workbench does not publish or send content.
+
+### Social image formats
+
+The GB workbench includes working-canvas presets for Instagram, Facebook, LinkedIn, X, Threads, Bluesky, TikTok, Pinterest, YouTube and WhatsApp, plus custom dimensions (64–4096 px, up to 16 megapixels). Select a format before creating a piece or use **Adaptar pieza a este formato** to recompose an existing design through the chat. Video placements produce static covers or scripts, not video files. The system UI keeps its monochrome theme.
+
+The download menu supports native dimensions or a selected output size in PNG/JPG. Tagged carousel slides (`data-social-piece`, `data-social-width`, `data-social-height`) export separately in one ZIP, up to 20 slides / 64 megapixels per download. Legacy untagged designs export as one image; ask the chat to adapt the carousel to enable individual slide exports. Export resizing fits the full content without cropping; recomposition uses the workbench action.
+
+Working sizes are editable presets, not guarantees of upload acceptance or platform cropping. References: [LinkedIn single image specs](https://www.linkedin.com/help/linkedin/answer/a426534), [Pinterest creative guidance](https://business.pinterest.com/en-gb/creative-best-practices/). Run `node --experimental-strip-types --test tests/social-export.test.mjs tests/gb-ui.test.mjs` for the format/export checks.

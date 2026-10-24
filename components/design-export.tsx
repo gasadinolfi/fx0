@@ -7,6 +7,8 @@ import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { fastClick } from '../lib/fast-click'
+import SocialFormatPicker from './social-format-picker'
+import { validSocialSize, type SocialFormat } from '../lib/social-formats'
 
 // "Landing page for a coffee roaster" → landing-page-for-a-coffee-roaster.html
 function designFileName(title: string | null | undefined): string {
@@ -44,6 +46,7 @@ export default function DesignExport({
   const [tipOpen, setTipOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [rendering, setRendering] = useState(false)
+  const [exportFormat, setExportFormat] = useState<SocialFormat | null>(null)
   const renderingRef = useRef(false)
   const cached = useRef<{ key: string; html: Promise<string> } | null>(null)
   const key = `${sessionId}:${revision ?? `latest-${latest}`}`
@@ -114,9 +117,19 @@ export default function DesignExport({
     setOpen(false)
     onNotice({ tone: 'status', text: `Rendering ${format.toUpperCase()}…` })
     try {
-      const [html, { renderDesignImage }] = await Promise.all([load(), import('./design-image')])
-      const blob = await renderDesignImage(html, format)
-      const fileName = designFileName(title).replace(/\.html$/, `.${format}`)
+      const [html, { renderDesignImages }] = await Promise.all([load(), import('./design-image')])
+      const images = await renderDesignImages(html, format, exportFormat ? { size: { width: exportFormat.width, height: exportFormat.height } } : {})
+      const slug = designFileName(title).replace(/\.html$/, '')
+      const suffix = exportFormat ? `-${exportFormat.id}-${exportFormat.width}x${exportFormat.height}` : ''
+      let blob: Blob, fileName: string
+      if (images.length > 1) {
+        const { imageZip } = await import('../lib/image-zip')
+        blob = await imageZip(images.map((image, i) => ({ name: `${slug}${suffix}-${String(i + 1).padStart(2, '0')}.${format}`, blob: image.blob })))
+        fileName = `${slug}${suffix}-${format}.zip`
+      } else {
+        blob = images[0].blob
+        fileName = `${slug}${suffix}.${format}`
+      }
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -125,9 +138,9 @@ export default function DesignExport({
       link.click()
       link.remove()
       setTimeout(() => URL.revokeObjectURL(url), 10_000)
-      onNotice({ tone: 'status', text: `Downloaded ${fileName}.` })
+      onNotice({ tone: 'status', text: images.length > 1 ? `Descargadas ${images.length} placas ${format.toUpperCase()} en ${fileName}.` : `Descargado ${fileName}.` })
     } catch (error) {
-      if (!(error instanceof AuthRouteError)) onNotice({ tone: 'error', text: 'Unable to render the image. Try again with a smaller design.' })
+      if (!(error instanceof AuthRouteError)) onNotice({ tone: 'error', text: error instanceof Error ? error.message : 'No se pudo exportar la imagen. Probá con una pieza más pequeña.' })
     } finally {
       renderingRef.current = false
       setRendering(false)
@@ -176,7 +189,7 @@ export default function DesignExport({
         </TooltipTrigger>
         <TooltipContent>{revision != null ? 'copy, download or publish this version' : 'copy, download or publish HTML'}</TooltipContent>
       </Tooltip>
-      <PopoverContent align="end" className="w-52 p-1">
+      <PopoverContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-1">
         <button
           type="button"
           {...fastClick(() => void copy())}
@@ -195,16 +208,17 @@ export default function DesignExport({
           </svg>
           download HTML
         </button>
+        <div className="flex flex-col gap-2 border-y border-border px-2.5 py-3 my-1"><SocialFormatPicker value={exportFormat} onChange={setExportFormat} disabled={rendering} original /><p className="text-xs leading-4 text-muted-foreground">Las placas del carrusel se guardan por separado en un ZIP. Cambiar el tamaño conserva todo el contenido; para recomponerlo, usá «Adaptar pieza» en la mesa.</p></div>
         {(['png', 'jpg'] as const).map((format) => (
           <Button
             key={format}
             variant="ghost"
             size="sm"
-            disabled={rendering}
+            disabled={rendering || (exportFormat !== null && !validSocialSize(exportFormat))}
             {...fastClick(() => void downloadImage(format))}
             className="w-full justify-start"
           >
-            {rendering ? 'Rendering image…' : `download ${format.toUpperCase()}`}
+            {rendering ? 'Exportando…' : `Descargar ${format.toUpperCase()}`}
           </Button>
         ))}
         <button

@@ -21,6 +21,7 @@ const hooks=registerHooks({resolve(s,c,next){
 }})
 after(()=>hooks.deregister())
 const {default:Workbench}=await import(pathToFileURL(join(output,'components/gb-workbench.js')).href)
+const {socialPrompt,SOCIAL_FORMATS}=await import(pathToFileURL(join(output,'lib/social-formats.js')).href)
 const {GB_SEED_CAMPAIGNS,GB_ACTIONS}=await import(pathToFileURL(join(output,'lib/gb-model.js')).href)
 const tick=()=>new Promise(r=>setImmediate(r))
 function setup(t,{sessionId='draft',binding=null,proposal=null}={}) {
@@ -99,7 +100,7 @@ test('GB gates actions on loaded context, then each button sends its specific ca
   s.view.flush();await tick();tree=s.view.render(s.props)
   assert.equal(find(tree,n=>n.type==='h2').props.children,'Invertir empieza por entender')
   for(const action of GB_ACTIONS){const target=find(tree,n=>n.props?.onClick&&text(n).startsWith(action.label));assert.equal(target.props.disabled,false);target.props.onClick()}
-  assert.deepEqual(s.sent,GB_ACTIONS.map(a=>a.prompt))
+  assert.deepEqual(s.sent,GB_ACTIONS.map((a,i)=>i<2?socialPrompt(a.prompt,SOCIAL_FORMATS[0]):a.prompt))
   assert.deepEqual(s.contexts.at(-1),{sessionId:'draft',campaignId:'entender'})
   tree=s.view.render({...s.props,busy:true})
   assert.equal(find(tree,n=>n.props?.onClick&&text(n).startsWith(GB_ACTIONS[0].label)).props.disabled,true)
@@ -135,4 +136,20 @@ test('a private workbench disappears when the account signs out',async t=>{
   s.view.render(s.props);s.view.flush();await tick()
   assert.equal(s.view.render({...s.props,enabled:false}),null)
   s.view.flush()
+})
+
+test('GB adapts the existing design to the chosen network without requesting a crop',async t=>{
+  const s=setup(t)
+  s.props.hasDesign=true
+  s.view.render(s.props);s.view.flush();await tick()
+  let tree=s.view.render(s.props)
+  const picker=find(tree,n=>typeof n.type==='function'&&n.type.name==='SocialFormatPicker')
+  assert.ok(picker)
+  picker.props.onChange(SOCIAL_FORMATS.find(f=>f.id==='youtube-thumbnail'))
+  tree=s.view.render(s.props)
+  button(tree,'Adaptar pieza a este formato').props.onClick()
+  assert.match(s.sent.at(-1),/1280 × 720/)
+  assert.match(s.sent.at(-1),/Recomponé todas las placas/)
+  assert.match(s.sent.at(-1),/data-social-piece/)
+  assert.match(s.sent.at(-1),/No lo resuelvas recortando/)
 })

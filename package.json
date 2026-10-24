@@ -15,7 +15,8 @@
     "test:smoke": "node tests/local-auth-smoke.mjs",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate-database.mjs",
     "test:trial:integration": "node --experimental-strip-types --test tests/trial.integration.mjs",
-    "test:gb": "node --experimental-strip-types --test tests/gb.test.mjs tests/gb-ui.test.mjs tests/route-security.test.mjs tests/runtime.test.mjs"
+    "test:gb": "node --experimental-strip-types --test tests/gb.test.mjs tests/gb-ui.test.mjs tests/route-security.test.mjs tests/runtime.test.mjs",
+    "test:social": "node --experimental-strip-types --test tests/social-export.test.mjs tests/gb-ui.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

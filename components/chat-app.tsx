@@ -31,6 +31,7 @@ import dynamic from 'next/dynamic.js'
 import type { LocalLogEntry } from './debug-panel'
 import NewChat from './new-chat'
 import type { GbSelection } from './gb-workbench'
+import { socialChatPrompt, validSocialSize, type SocialFormat } from '../lib/social-formats'
 const GbWorkbench = dynamic(() => import('./gb-workbench'), { ssr: false })
 const GbEmptyPreview = dynamic(() => import('./gb-workbench').then(module => module.GbEmptyPreview), { ssr: false })
 
@@ -276,6 +277,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   const [sessionId, setSessionId] = useState('draft')
   const [gbSelection, setGbSelection] = useState<GbSelection>({ sessionId: 'draft', campaignId: null })
   const workspaceById = useRef(new Map<string, boolean>())
+  const [gbSocialFormat, setGbSocialFormat] = useState<SocialFormat | null>(null)
   const [trialChat, setTrialChat] = useState(false)
   const [sessions, setSessions] = useState<SessionInfo[]>([])
   const [entries, setEntries] = useState<ChatEntry[]>(initialState.entries)
@@ -1192,6 +1194,10 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
       setInteractionNotice({ tone: 'error', text: 'Esperá a que cargue el contexto de GB o recargá la mesa.' })
       return false
     }
+    if (gb && gbSocialFormat && !validSocialSize(gbSocialFormat)) {
+      setInteractionNotice({ tone: 'error', text: 'Elegí medidas entre 64 y 4096 px, hasta 16 megapíxeles.' })
+      return false
+    }
     if (signedOut.current) return false
     if (booting) {
       // A suggestion fills an empty composer; it never replaces an unsent draft.
@@ -1211,7 +1217,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
       return false
     }
     if (preparingPromptRef.current || switchingTo) return false
-    void sendPrompt(value, images)
+    void sendPrompt(gb && gbSocialFormat ? socialChatPrompt(value, gbSocialFormat) : value, images)
     return true
   }
 
@@ -1966,7 +1972,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
             )}
           </header>
 
-          {gb && <GbWorkbench sessionId={sessionId} enabled={isAuthenticated && !authBlocked} busy={awaiting || activeTurnId != null} empty={entries.length === 0} onContext={setGbSelection} onNew={newDesign} onSend={sendFromTranscript} />}
+          {gb && <GbWorkbench onFormat={setGbSocialFormat} hasDesign={artifactRevision > 0} sessionId={sessionId} enabled={isAuthenticated && !authBlocked} busy={awaiting || activeTurnId != null} empty={entries.length === 0} onContext={setGbSelection} onNew={newDesign} onSend={sendFromTranscript} />}
 
           <div
             ref={threadRef}
