@@ -422,3 +422,54 @@ select:not(:disabled) {
     --sidebar-fade-bottom: var(--sidebar-fade-size);
   }
 }
+
+
+/* GB is a scoped workbench theme. Portalled context panels carry the same scope. */
+.gb-surface {
+  --background: #091932;
+  --foreground: #f9f7f0;
+  --foreground-secondary: #c7d3e7;
+  --foreground-tertiary: #a2b4cf;
+  --muted: #102247;
+  --muted-foreground: #c7d3e7;
+  --primary: #f0d27b;
+  --primary-foreground: #102247;
+  --secondary: #193156;
+  --secondary-foreground: #f9f7f0;
+  --accent: #193156;
+  --accent-foreground: #f9f7f0;
+  --border: #304563;
+  --border-strong: #63789f;
+  --input: #425879;
+  --ring: #f0d27b;
+  --destructive: #ffb3ab;
+  --sidebar: #09142f;
+  --sidebar-foreground: #f9f7f0;
+  --sidebar-border: #304563;
+  --popover: #102247;
+  --popover-foreground: #f9f7f0;
+  color: var(--foreground);
+  background: var(--background);
+  color-scheme: dark;
+}
+.gb-monogram {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--primary);
+}
+.gb-workbench { flex-shrink: 0; }
+@media (max-height: 760px) {
+  .gb-workbench .gb-intro { padding-block: 12px; }
+  .gb-workbench .gb-intro h2 { font-size: 24px; }
+}
+@media (max-width: 640px) {
+  .gb-workbench .gb-intro { padding-block: 12px; }
+  .gb-workbench .gb-intro h2 { font-size: 26px; }
+  .gb-workbench .gb-intro p { margin-top: 8px; }
+}

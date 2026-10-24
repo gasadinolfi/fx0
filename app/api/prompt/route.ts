@@ -1,3 +1,6 @@
+import { bindGbSession, readGbBinding, readGbWorkspace, gbCampaign, gbPromptImages } from '../../../lib/gb-store'
+import { readSession } from '../../../lib/journal'
+import { AuthError } from '../../../lib/accounts'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { after } from 'next/server'
@@ -32,12 +35,30 @@ export const POST = withPromptRoute(async (request, context) => {
     images?: unknown
     previews?: unknown
     generation?: { model?: unknown; effort?: unknown; fast?: unknown }
+    gb?: { campaignId?: unknown }
     designMd?: unknown
   }
   try {
     body = await request.json()
   } catch {
     return Response.json({ error: 'invalid json' }, { status: 400 })
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return Response.json({ error: 'invalid json object' }, { status: 400 })
+  if (body.gb !== undefined && (!body.gb || typeof body.gb !== 'object' || typeof body.gb.campaignId !== 'string')) return Response.json({ error: 'invalid GB campaign' }, { status: 400 })
+  const gbBinding = existing ? await readGbBinding(existing.id) : null
+  const gbRequested = body.gb !== undefined || gbBinding != null
+  let gbCampaignId: string | null = null
+  let gbGuideText = ''
+  if (gbRequested) {
+    if ('kind' in session) throw new AuthError(401, 'Ingresá a tu cuenta para usar GB.')
+    if (gbBinding && gbBinding.ownerId !== user.id) throw new AuthError(404)
+    const state = await readGbWorkspace(user.id)
+    const selected = gbCampaign(state, body.gb?.campaignId ?? gbBinding?.campaignId)
+    if (gbBinding && gbBinding.campaignId !== selected.id) throw new AuthError(409, 'Iniciá otra conversación para cambiar de campaña.')
+    if (existing && !gbBinding && await readSession(existing.id)) throw new AuthError(409, 'Esta conversación no pertenece a GB. Iniciá una nueva.')
+    gbCampaignId = selected.id
+    gbGuideText = state.guides.find(g => g.id === selected.guideId)!.text
   }
 
   const text = typeof body?.text === 'string' ? body.text.trim() : ''
@@ -81,7 +102,7 @@ export const POST = withPromptRoute(async (request, context) => {
     preferredModel: typeof generation.model === 'string' && generation.model.trim() ? generation.model.trim().slice(0, 200) : null,
     preferredEffort: typeof generation.effort === 'string' && generation.effort.trim() ? generation.effort.trim().slice(0, 32) : null,
     preferredFast: typeof generation.fast === 'boolean' ? generation.fast : null,
-    designMd,
+    designMd: gbCampaignId ? { name: 'Bengochea DESIGN.md', source: `gb:${gbCampaignId}`, text: gbGuideText } : designMd,
   }
   const guest = 'kind' in session
   if (guest) {
@@ -117,12 +138,14 @@ export const POST = withPromptRoute(async (request, context) => {
   let activated: SessionRouteContext
   try {
     activated = await context.activate()
+    if (gbCampaignId) await bindGbSession(user.id, activated.id, gbCampaignId)
+    const referenceImages = gbCampaignId && !images?.length ? await gbPromptImages(activated.id) : []
     submitted = await submitPrompt(
       activated.host,
       author,
       text.slice(0, 4000),
       clientId,
-      images?.length ? images : undefined,
+      images?.length ? images : referenceImages.length ? referenceImages : undefined,
       initial,
       previews.length ? previews : undefined,
       funding,

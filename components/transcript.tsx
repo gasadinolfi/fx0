@@ -31,13 +31,14 @@ const TranscriptActivity = memo(function TranscriptActivity({ entries, state, wr
   a.entries.length === b.entries.length && a.entries.every((entry, index) => entry === b.entries[index])
 ))
 
-export default memo(function Transcript({ sessionId, entries, activeTurnId, startedTurns, drafting, onOpenRevision, onSend }: {
+export default memo(function Transcript({ sessionId, entries, activeTurnId, startedTurns, drafting, onOpenRevision, onSend, hideSuggestions = false }: {
   sessionId: string
   entries: ChatEntry[]
   activeTurnId: number | null
   startedTurns: number[]
   // A design streams into the preview while the model writes it.
   drafting: boolean
+  hideSuggestions?: boolean
   onOpenRevision?: (revision: number) => void
   onSend: (text: string) => unknown
 }) {
@@ -45,7 +46,7 @@ export default memo(function Transcript({ sessionId, entries, activeTurnId, star
   const started = useMemo(() => new Set(startedTurns), [startedTurns])
   return (
     <>
-      {entries.length === 0 && (
+      {entries.length === 0 && !hideSuggestions && (
         // A chat loading from its URL: the shape of a first message and its answer.
         <div aria-hidden="true" className="hidden [html.chat-url_&]:block">
           <div className="mb-4 flex justify-end"><Skeleton className="h-9 w-3/5" /></div>
@@ -56,7 +57,7 @@ export default memo(function Transcript({ sessionId, entries, activeTurnId, star
           </div>
         </div>
       )}
-      {entries.length === 0 && (
+      {entries.length === 0 && !hideSuggestions && (
         <div className="mx-auto mt-[12vh] max-w-xl [html.chat-url_&]:hidden">
           <div className="mt-6 space-y-0.5">
             {SUGGESTIONS.map((suggestion) => (

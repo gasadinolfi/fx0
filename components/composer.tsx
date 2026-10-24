@@ -206,6 +206,7 @@ function PreferredModelLabel({ preference, sessionId, booting, defaultModel }: {
 export default function Composer({
   ref,
   persistSettings,
+  workspaceGb = false,
   busy,
   stopping,
   sessionId,
@@ -227,6 +228,7 @@ export default function Composer({
 }: {
   ref?: Ref<ComposerHandle>
   persistSettings: boolean
+  workspaceGb?: boolean
   busy: boolean
   stopping: boolean
   sessionId: string
@@ -930,7 +932,7 @@ export default function Composer({
             aria-controls={matching.length > 0 ? commandListId : undefined}
             aria-activedescendant={activeOptionId}
             rows={1}
-            placeholder="ask fx0 to design"
+            placeholder={workspaceGb ? "¿Qué creamos para Bengochea?" : "ask fx0 to design"}
             className="min-h-16 border-0 px-3 py-2.5 text-sm leading-5 shadow-none focus-visible:ring-0"
           />
           <script dangerouslySetInnerHTML={{ __html: RESTORE_PROMPT }} />
@@ -1118,7 +1120,7 @@ export default function Composer({
             </Popover>)}
 
             {/* A DESIGN.md only goes with a new chat's first prompt; elsewhere attach means images. */}
-            {!newChat ? (
+            {!newChat || workspaceGb ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

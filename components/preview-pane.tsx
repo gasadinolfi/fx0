@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { EMPTY_DRAFT_DOCUMENT, patchDraftDocument } from '../lib/draft-preview'
 import { HowItWorksPanel } from './how-it-works'
 
@@ -11,6 +11,7 @@ export default function PreviewPane({
   viewing,
   draft = null,
   intro,
+  introContent,
   onClose,
 }: {
   source: PreviewSource
@@ -20,6 +21,7 @@ export default function PreviewPane({
   draft?: string | null
   // Only an empty chat explains fx0; a chat waiting on its first design stays blank.
   intro: boolean
+  introContent?: ReactNode
   onClose: () => void
 }) {
   const session = encodeURIComponent(source.sessionId)
@@ -136,7 +138,7 @@ export default function PreviewPane({
         <div className="min-h-0 flex-1 overflow-y-auto [html.chat-url_&]:hidden">
           <div className="flex min-h-full items-center justify-center px-6 py-10">
             <div className="w-full max-w-sm">
-              <HowItWorksPanel />
+              {introContent ?? <HowItWorksPanel />}
             </div>
           </div>
         </div>

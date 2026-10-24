@@ -28,7 +28,7 @@ export const assertGenerationCredential = (host) => {
 export const gatewayFetch = () => async () => Response.json({})`)
 registerHooks({ resolve(specifier, context, next) {
   if (context.parentURL?.includes('/lib/')) {
-    const fake = { libfx: libfxUrl, './journal': journalUrl, './turn-credential': credentialUrl, './history': historyUrl, './gateway-session': gatewayUrl }[specifier]
+    const fake = { './gb-store': dataUrl('export async function gbSessionContext() { return globalThis.__fx0Runtime.gbContext ?? null; }'), libfx: libfxUrl, './journal': journalUrl, './turn-credential': credentialUrl, './history': historyUrl, './gateway-session': gatewayUrl }[specifier]
     if (fake) return { url: fake, shortCircuit: true }
     if (specifier.startsWith('./') && !/\.[cm]?[jt]s$/.test(specifier)) return next(`${specifier}.ts`, context)
   }
@@ -569,4 +569,20 @@ test('a message that joins the running turn is shown as part of that turn', () =
     [{ type: 'status', id: 3, turnId: 2, text: 'steering the running turn', at: 5 }],
   )
   assert.deepEqual(projector.itemsOf({ type: 'user_message', messageId: 'm2', text: 'no id' }, 5), [], 'steering fx0 did not send is skipped')
+})
+
+test('GB generation carries campaign and tone across turns and updates only when the pinned context changes', async t => {
+  const f=fixture(t,{designMd:{name:'GB',source:'gb:entender',sha:'gb-initial',bytes:9},libfxSessionId:null})
+  f.gbContext='# Mesa de trabajo GB\nVoseo rioplatense.\nCampaña: Invertir empieza por entender.\nGuía v1.'
+  const host=boundHost('gb-generation')
+  await runtime.submitPrompt(host,'Ada','Prepará el guion de video')
+  assert.match(f.sent[0].sessionOptions.instructions,/GB workspace behavior/)
+  assert.match(f.sent[0].sessionOptions.instructions,/video scripts as text/)
+  assert.match(f.sent[0].sessionOptions.instructions,/Voseo rioplatense/)
+  assert.match(f.sent[0].sessionOptions.instructions,/Invertir empieza por entender/)
+  f.gbContext=f.gbContext.replace('Guía v1.','Guía v2 aceptada y adoptada.')
+  await runtime.submitPrompt(host,'Ada','Hacelo más breve')
+  assert.match(f.sent[1].sessionOptions.instructions,/Guía v2 aceptada y adoptada/)
+  assert.match(f.sent[0].sessionOptions.instructions,/Guía v1/)
+  assert.equal(f.sent[1].id,f.sent[0].id)
 })

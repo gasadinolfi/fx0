@@ -1,0 +1,1051 @@
+## Página 1
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+1
+BENGOCHEA / DOCUMENTOS DE TRABAJO
+Bengochea
+Base de marketing y comunicación
+Manual de trabajo · 22 de octubre de 2026
+Este documento convierte el archivo de la empresa en una base para diseñar campañas. Incluye hechos
+documentados, hipótesis de públicos y propuestas creativas. Los ejemplos son borradores: no fueron publicados ni
+validados por la empresa. No presupone que existan cuentas activas en los canales sugeridos.
+Índice de contenidos
+3
+1. Qué se puede construir con esta base
+4
+2. Plataforma de marca propuesta
+5
+3. Públicos: hipótesis para validar
+6
+4. Necesidades y objeciones
+7
+5. Arquitectura de mensajes
+8
+6. Voz y estilo
+9
+7. Matriz de afirmaciones y respaldo
+10
+8. Canales y función propuesta
+11
+9. Campaña A · Invertir empieza por entender
+12
+10. Campaña B · Una mirada al mundo, desde Uruguay
+13
+11. Campaña C · Desde 1967, una historia de conversaciones
+14
+12. Campaña D · El mercado, explicado
+15
+13. Campaña E · Una cartera también necesita conversación
+16
+14. Campaña F · Las personas detrás del asesoramiento
+17
+15. Calendario editorial de 30 días
+19
+16. Banco de textos breves
+
+
+## Página 2
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+2
+20
+17. Secuencia de tres emails
+21
+18. Estructura de página de campaña
+22
+19. Identidad visual: lo que hay y lo que falta
+23
+20. Medición y aprendizaje
+24
+21. Flujo de producción y publicación
+25
+22. Información pendiente para completar la estrategia
+26
+23. Brief listo para entregar a diseño y redacción
+27
+24. Fuentes y alcance
+
+
+## Página 3
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+3
+1. Qué se puede construir con esta base
+Una presentación institucional, un plan de contenidos, anuncios de consulta, entrevistas al equipo, newsletters,
+guiones de video, una página de captación y campañas de educación financiera. La información de mercado debe
+salir de una fuente fechada y revisarse nuevamente al momento de su uso.
+Objetivo estratégico propuesto: ayudar a que las personas entiendan qué hace Bengochea, reconozcan cuándo
+necesitan asesoramiento y lleguen a una conversación con expectativas claras.
+Acción principal sugerida: solicitar una conversación informativa con un asesor. El archivo no demuestra una
+apertura de cuenta enteramente digital, una respuesta inmediata ni un canal de WhatsApp; no deben prometerse.
+Organización del material: D001–D005 describen la empresa; D006–D013 respaldan normas, costos, certificado y
+reclamos; D014–D018 contienen estudios especiales; D019–D031 son mensuales; D032–D095 son semanales;
+D096–D103 son noticias. Referencias al dossier completo, no códigos de campañas.
+
+
+## Página 4
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+4
+2. Plataforma de marca propuesta
+Elemento
+Base de trabajo
+Carácter
+Actividad
+Intermediación y asesoramiento en inversiones con
+acceso local e internacional.
+Documentado: D002, D008.
+Propósito expresado
+Ampliar el acceso a inversiones y dar asesoramiento
+de acuerdo con objetivos del inversor.
+Misión publicada: D003.
+Promesa de servicio
+Escuchar, explicar y acompañar las decisiones de
+inversión.
+Síntesis editorial del proceso: D002, D003.
+Posicionamiento
+Cercanía desde Uruguay para entender y acceder al
+mundo de las inversiones.
+Propuesta estratégica, no eslogan oficial.
+Pruebas narrativas
+Trayectoria desde 1967; proceso de asesoramiento;
+equipo por funciones; catálogo local e internacional;
+archivo de research.
+Documentado, con vigencia por confirmar cuando
+corresponda.
+Personalidad
+Serena, clara, profesional, cercana y cuidadosa con
+la incertidumbre.
+Dirección creativa propuesta.
+Acción esperada
+Pasar de una inquietud a una conversación
+informada.
+Objetivo de campaña propuesto.
+El posicionamiento se apoya en su discurso; no demuestra una ventaja exclusiva frente a competidores. No hay
+investigación comparativa para afirmar «los mejores», «los primeros» o «líderes» como reclamo actual.
+
+
+## Página 5
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+5
+3. Públicos: hipótesis para validar
+Los siguientes grupos se definen por necesidades, no por edad o patrimonio inventado. Son hipótesis de
+comunicación; no provienen de una base de clientes.
+Público posible
+Necesidad
+Barrera
+Mensaje de entrada
+Contenido útil
+Conversión
+Persona que
+empieza a
+explorar
+inversiones
+Entender qué opciones
+existen y qué implica
+una cuenta.
+Lenguaje técnico o
+percepción de que
+invertir es
+inaccesible.
+Empezá por tus
+preguntas.
+Guía de primera
+conversación, glosario
+y proceso.
+Solicitud de
+información.
+Ahorrador con
+objetivos
+definidos
+Ordenar horizonte,
+liquidez y moneda.
+No sabe cómo
+traducir su objetivo
+a una propuesta.
+Tus objetivos ayudan a
+ordenar las decisiones.
+Preguntas sobre plazo
+y disponibilidad.
+Reunión
+exploratoria.
+Inversor que
+busca
+diversificar
+Entender alternativas
+locales e
+internacionales.
+Confunde
+diversificación con
+acumular
+instrumentos.
+Mirar más opciones
+también exige
+entender sus
+diferencias.
+Mapa del ecosistema y
+preguntas de riesgo.
+Consulta sobre el
+proceso de
+asesoramiento.
+Cliente actual
+Comprender informes
+y mantener una
+relación activa.
+Exceso de
+información, dudas
+no expresadas.
+Una cartera también
+necesita conversación.
+Newsletter explicado y
+encuentro con el
+equipo.
+Revisión de
+objetivos por canal
+existente.
+Empresa o
+institución
+Conocer capacidades
+documentadas de
+financiamiento y
+mercados.
+Necesita saber si
+existe un servicio
+pertinente.
+Conocé la experiencia
+de Bengochea en
+financiamiento.
+Historia de
+fideicomisos y
+proyectos
+documentados.
+Consulta
+institucional;
+confirmar oferta
+vigente.
+No usar inferencias sobre dificultades económicas, patrimonio o conducta personal para redactar mensajes que
+identifiquen al destinatario de forma invasiva. La segmentación operativa se definirá con datos autorizados, no a
+partir de estas hipótesis.
+
+
+## Página 6
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+6
+4. Necesidades y objeciones
+Pregunta del público
+Respuesta de comunicación
+Qué confirmar con el equipo
+¿Tengo que saber de finanzas?
+El primer paso puede ser una conversación sobre
+objetivos y preguntas. La explicación de
+instrumentos forma parte del discurso institucional.
+Alcance del asesoramiento inicial.
+¿Cuánto necesito?
+Distinguir mínimo de apertura, mínimo por
+instrumento y comisión mínima.
+Condiciones actuales; no responder «cualquier
+monto».
+¿Qué costos hay?
+Explicar categorías y ofrecer detalle completo antes
+de contratar.
+Tarifario vigente y ejemplo representativo.
+¿Puedo perder dinero?
+No presentar la inversión como libre de riesgo.
+Explicar riesgos de cada producto y su adecuación.
+Texto y ejemplos aprobados para la pieza.
+¿Cómo sé dónde están mis
+activos?
+La firma declara cuentas segregadas; ofrecer
+explicación de la modalidad concreta.
+Custodio, titularidad, jurisdicción y condiciones.
+¿Puedo retirar cuando quiera?
+La disponibilidad depende del instrumento y de las
+condiciones operativas.
+Liquidez, plazos de liquidación y costos.
+¿Me van a vender lo mismo que
+a todos?
+La propuesta publicada habla de objetivos y perfil
+individual.
+Cómo se instrumenta hoy y quién hace el
+seguimiento.
+¿Pueden garantizarme
+ganancias?
+No prometer resultados ni protección total del
+capital.
+Condiciones de cualquier producto mencionado.
+
+
+## Página 7
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+7
+5. Arquitectura de mensajes
+Mensaje principal propuesto: «Tus objetivos merecen una conversación. En Bengochea, conocé una forma de
+invertir con asesoramiento y seguimiento».
+Pilar
+Mensaje
+Respaldo
+Forma de demostrarlo
+Escucha
+Antes de hablar de productos,
+conversemos sobre objetivos.
+D002, D003.
+Entrevista que muestre
+preguntas iniciales.
+Comprensión
+Entender las opciones
+también forma parte de
+invertir.
+D003.
+Explicación breve de un
+concepto con límites y riesgos.
+Acceso
+Desde Uruguay, un ecosistema
+local e internacional.
+D002.
+Mapa de familias de
+instrumentos.
+Trayectoria
+Una historia bursátil que
+comienza en 1967.
+D004, D012.
+Línea de tiempo documentada.
+Seguimiento
+Los objetivos y las
+circunstancias pueden
+cambiar.
+D002.
+Explicación del proceso de
+revisión, sin inventar una
+frecuencia.
+Transparencia
+Condiciones, costos y riesgos
+deben entenderse.
+D006, D008.
+Preguntas para leer una
+propuesta y un tarifario.
+Variantes creativas, no oficiales: «Invertir empieza por entender»; «Tu próxima decisión empieza con una
+conversación»; «Una mirada al mundo. Una conversación cercana».
+Usar una sola idea principal por pieza. El catálogo completo pertenece a una página de detalle o guía, no a un
+anuncio breve.
+
+
+## Página 8
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+8
+6. Voz y estilo
+Voseo rioplatense, frases directas, tono sereno y respeto por quien todavía no conoce el tema. Explicar primero la
+pregunta práctica y luego introducir el término técnico. No confundir sencillez con minimizar riesgos.
+Preferir
+Evitar
+Motivo
+Conocé las opciones y sus
+diferencias.
+Aprovechá antes de que sea tarde.
+Evita presión sin evidencia.
+Conversemos sobre tus
+objetivos.
+Sabemos exactamente qué te conviene.
+No anticipa un asesoramiento individual.
+La propuesta depende de tu
+perfil y horizonte.
+La inversión ideal para todos.
+Conserva la personalización.
+Trayectoria desde 1967.
+60 años de trayectoria en 2026.
+Coherencia temporal.
+Información para entender el
+contexto.
+La próxima oportunidad ganadora.
+No convierte research en promesa.
+Consultá condiciones y costos.
+Sin costos, sin límites.
+La carpeta contiene cargos y mínimos.
+Cuando se usen porcentajes, escribir qué miden, período, moneda y fuente. Separar rendimientos históricos de
+proyecciones. Un aviso pequeño no corrige un titular engañoso.
+
+
+## Página 9
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+9
+7. Matriz de afirmaciones y respaldo
+Afirmación
+Estado en el archivo
+Uso propuesto
+Trayectoria desde 1967
+Historia y certificado: D004, D012.
+Base institucional, con revisión final de redacción.
+Asesoramiento de acuerdo a
+objetivos y perfil
+D002, D003, D008.
+Eje principal de servicio.
+Acceso a mercados locales e
+internacionales
+D002, D008.
+Describir alcance; no implica disponibilidad de
+todo instrumento.
+Sin mínimo de apertura
+Declaración en D003.
+Confirmar vigencia y distinguir mínimos de
+operación.
+Regulada por el BCU
+Declaración institucional en D003.
+Verificar registro y denominación actuales antes
+de usar. No implica aval de rendimientos.
+Cuentas segregadas
+Declaración en D003.
+Confirmar modalidad de cuenta y formulación
+precisa.
+Miles de clientes
+Declaración sin cifra fechada en D003.
+No transformar en número actual ni usar como
+prueba cuantitativa.
+Acuerdos con Fidelity,
+Clearstream y BNY
+Historia: D004.
+Tratar como hitos históricos; confirmar vigencia y
+permisos de marca.
+Adhesión al código de CFA
+Institute
+Declaración histórica: D004.
+No presentar como certificación de la firma o
+recomendación del instituto.
+Informes periódicos
+Publicaciones y servicio descritos.
+Confirmar cadencia actual, distribución y derechos
+de reproducción.
+Costos de 2025
+D008 indica vigencia 01/04/2025.
+Referencia histórica interna hasta validar tarifario
+actual.
+Rentabilidad o seguridad
+garantizadas
+No respaldadas.
+No utilizar.
+Liderazgo o superioridad
+competitiva
+No se aportó comparación.
+No utilizar como hecho.
+Cuenta abierta en minutos
+No respaldada.
+No prometer plazo ni automatización.
+Esta matriz organiza evidencia documental; no reemplaza una revisión jurídica ni incorpora reglas legales actuales
+de publicidad financiera.
+
+
+## Página 10
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+10
+8. Canales y función propuesta
+Canal posible
+Función
+Formatos
+Acción
+Sitio web
+Explicar oferta y proceso;
+centralizar fuentes vigentes.
+Página institucional, servicios, preguntas y
+contacto.
+Solicitar conversación.
+Instagram
+Acercar preguntas y explicar
+conceptos.
+Carruseles, videos breves, historias.
+Leer guía o visitar contacto.
+LinkedIn
+Presentar experiencia, equipo
+y mirada institucional.
+Artículos breves, entrevistas y línea de
+tiempo.
+Conocer capacidades o solicitar
+reunión.
+Email
+Mantener una relación
+informativa con contactos
+autorizados.
+Bienvenida, resumen explicado, invitación.
+Responder o agendar por canal
+confirmado.
+Encuentro o webinar
+Explicar en profundidad y
+escuchar preguntas.
+Conversación temática con moderación.
+Solicitar seguimiento
+voluntario.
+Material para
+reuniones
+Alinear el discurso comercial.
+Presentación, ficha de servicios y FAQ.
+Registrar el siguiente paso
+acordado.
+La selección y el peso de los canales son hipótesis. No se incluyen costos de medios, especificaciones técnicas de
+plataformas ni resultados esperados sin datos actuales.
+
+
+## Página 11
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+11
+9. Campaña A · Invertir empieza por entender
+Objetivo: conocimiento del servicio y consultas iniciales. Público: personas que exploran por primera vez. Idea:
+empezar por preguntas, no por un producto. Respaldo: D002, D003. Conversión: solicitud de información.
+Carrusel de seis placas: 1) Invertir empieza por entender. 2) ¿Para qué querés invertir? 3) ¿Cuándo podrías
+necesitar ese dinero? 4) ¿Qué riesgos necesitás conocer? 5) ¿Cómo se explican costos y condiciones? 6) Tus
+preguntas son un buen punto de partida. Conversemos.
+Texto de publicación: «No hace falta empezar por el nombre de un instrumento. Podés empezar por tus objetivos,
+tus plazos y tus preguntas. Conocé cómo Bengochea describe su proceso de asesoramiento y seguimiento. Solicitá
+una conversación informativa».
+Video de 25–30 segundos: plano de un asesor preparando una reunión; voz: «Antes de hablar de inversiones, hay
+preguntas. Qué querés lograr. En qué plazo. Qué necesitás entender. En Bengochea, la propuesta publicada parte
+de escuchar y conocer los objetivos del inversor. Conversemos». Cierre con canal confirmado, sin promesa de
+respuesta inmediata.
+Prueba: titular centrado en preguntas frente a titular centrado en comprensión. Medir visitas útiles y consultas
+pertinentes. No elegir solo por cantidad de clics.
+
+
+## Página 12
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+12
+10. Campaña B · Una mirada al mundo, desde
+Uruguay
+Objetivo: explicar el alcance local e internacional. Público: interesados en conocer alternativas y diversificación.
+Idea: mostrar familias de instrumentos y su relación con preguntas del inversor. Respaldo: D002. Conversión:
+lectura del ecosistema y consulta.
+Piezas: mapa de dos columnas, video de explicación y artículo «Qué conviene preguntar antes de conocer un
+instrumento internacional».
+Anuncio: «Bonos, acciones, fondos y otras alternativas tienen características diferentes. Conocé el ecosistema local
+e internacional que presenta Bengochea y el proceso para conversar sobre objetivos y perfil».
+Carrusel: 1) Una mirada al mundo, desde Uruguay. 2) Mercado local: distintas monedas y estructuras. 3) Mercado
+internacional: deuda, acciones y fondos. 4) Acceder no es lo mismo que elegir. 5) Antes de decidir: riesgos, costos,
+moneda y plazo. 6) Conocé el proceso de asesoramiento.
+Dirección visual: diagrama geográfico esquemático sin logos de bolsas o custodios no autorizados. Evitar imágenes
+de lujo que sustituyan la explicación del servicio. No afirmar que diversificar elimina pérdidas.
+
+
+## Página 13
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+13
+11. Campaña C · Desde 1967, una historia de
+conversaciones
+Objetivo: reconocimiento y confianza institucional. Público: personas que evalúan quién está detrás de la firma.
+Idea: usar hechos verificables de su historia. Respaldo: D004, D012. Conversión: visita a historia y equipo.
+Secuencia: origen en 1967; desarrollo de acceso internacional; herramientas de consulta; experiencia en
+financiamiento; presente explicado por una persona del equipo. Los acuerdos históricos se fecharán expresamente.
+Texto de publicación: «La historia de Bengochea empieza en 1967. A lo largo del tiempo, su relato institucional
+reúne nuevos servicios, herramientas de consulta y acceso a mercados. Conocé los hitos y a las personas detrás del
+asesoramiento».
+Entrevista: ¿Qué preguntas se repiten en una primera reunión? ¿Qué cambió en la forma de explicar los mercados?
+¿Qué sigue siendo importante al escuchar a un cliente? Filmar respuestas reales; no atribuir citas previamente
+escritas a una persona.
+Cuidado editorial: en 2026 usar «desde 1967», no «60 años». No presentar el paso del tiempo como prueba de
+rentabilidad ni de ausencia de riesgo.
+
+
+## Página 14
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+14
+12. Campaña D · El mercado, explicado
+Objetivo: educación y relación sostenida. Público: lectores de research y clientes interesados en contexto. Idea: una
+pregunta por entrega, con fecha y fuente. Respaldo: informes del dossier, elegidos y revisados por un especialista.
+Plantilla: fecha de publicación; pregunta; tres ideas; qué no permite concluir el dato; enlace al informe; invitación a
+consultar. No reutilizar una perspectiva de 2023 o 2025 como si describiera el presente.
+Ejemplo sin coyuntura: «¿Qué significa que suban las tasas? Antes de sacar conclusiones sobre una cartera,
+conviene mirar qué instrumento estamos analizando, su plazo y su sensibilidad a los cambios. En una próxima
+explicación vamos a ordenar estas preguntas con el equipo». Requiere desarrollo técnico del especialista; no es
+recomendación de compra.
+Aprovechamiento de un informe: artículo explicado, carrusel con un gráfico autorizado, video de una pregunta y
+email de lectura. Revisar autoría: algunos mensuales atribuyen elaboración a Paula Bujia / BUDA Partners; no
+presentarlos automáticamente como investigación propia exclusiva de Bengochea.
+Medición: lectura, visitas al informe, respuestas y consultas. Las reacciones por sí solas no demuestran
+comprensión.
+
+
+## Página 15
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+15
+13. Campaña E · Una cartera también necesita
+conversación
+Objetivo: relación con clientes actuales. Público: contactos existentes con canal habilitado. Idea: revisar si los
+objetivos o las necesidades cambiaron. Respaldo: seguimiento y revisión en D002. Conversión: conversación con el
+contacto asignado.
+Email: «Tus objetivos pueden cambiar. Si cambió tu horizonte, tu necesidad de liquidez o alguna circunstancia
+importante, puede ser un buen momento para conversarlo con tu asesor. Contactanos por el canal habitual para
+coordinar una revisión de objetivos».
+Guía de la conversación: qué cambió; qué dinero podría necesitarse; qué preguntas hay sobre la información
+recibida; cuál es el próximo paso. No incluir saldos, posiciones ni circunstancias del cliente en piezas públicas.
+Medición: reuniones efectivamente realizadas y dudas resueltas, con registro comercial autorizado. No prometer
+periodicidad ni un nivel de servicio que no se haya confirmado.
+
+
+## Página 16
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+16
+14. Campaña F · Las personas detrás del
+asesoramiento
+Objetivo: hacer comprensibles las funciones del equipo. Público: interesados que todavía perciben la empresa
+como distante. Respaldo: D003. Conversión: conocer el proceso o solicitar información.
+Serie: asesoría explica qué pregunta primero; operaciones describe su función; administración explica qué
+información debe entenderse; cumplimiento explica por qué importan la claridad y los canales formales. Definir
+voceros actuales y límites de cada rol.
+Guion de entrevista: «¿Qué hacés dentro del equipo? ¿Qué pregunta te gustaría que hicieran más? ¿Qué
+información necesita un cliente para entender el siguiente paso?».
+Texto: «Detrás de una relación de inversión hay distintas funciones. En esta serie, el equipo explica cómo participa
+en el proceso y qué preguntas ayuda a responder». No inventar testimonios, resultados de clientes ni citas del
+personal.
+
+
+## Página 17
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+17
+15. Calendario editorial de 30 días
+Propuesta de arranque. Los días son relativos, no fechas de publicación programadas. La frecuencia debe ajustarse a
+capacidad y aprobación. Las jornadas de escucha o revisión son tareas de comunicación, no publicaciones
+obligatorias.
+Día
+Tema y acción
+Formato/canal posible
+Objetivo y siguiente paso
+1
+Invertir empieza por entender.
+Carrusel/Instagram.
+Presentar enfoque; ver proceso.
+2
+Revisar preguntas recibidas.
+Trabajo interno.
+Detectar lenguaje y dudas
+reales.
+3
+Qué hace Bengochea.
+Publicación/LinkedIn.
+Explicar actividad; ver servicios.
+4
+¿Qué querés entender
+primero?
+Historia con pregunta.
+Escucha; no pedir datos
+financieros.
+5
+Objetivos, horizonte y
+preguntas.
+Video breve.
+Explicar primera conversación.
+6
+Preparar respuestas a dudas.
+Trabajo interno.
+Corregir FAQ.
+7
+Lectura guiada de la semana.
+Email autorizado.
+Visitar guía de empresa.
+8
+Trayectoria desde 1967.
+Línea de tiempo.
+Reconocimiento; leer historia.
+9
+Una pregunta al equipo.
+Video de vocero autorizado.
+Cercanía; conocer funciones.
+10
+Mercado local e internacional.
+Carrusel de categorías.
+Entender alcance; leer
+ecosistema.
+11
+Pregunta sobre plazo.
+Historia educativa.
+Llevar preguntas a una consulta.
+12
+Explicar antes de decidir.
+Artículo breve.
+Profundizar en proceso.
+13
+Revisar consultas y
+derivaciones.
+Trabajo interno.
+Mejorar atención y trazabilidad.
+14
+Recapitulación de preguntas.
+Historias/FAQ.
+Resolver dudas frecuentes.
+15
+Apertura, inversión y
+comisiones mínimas.
+Carrusel.
+Explicar diferencias; consultar
+condiciones.
+16
+Qué preguntar sobre custodia.
+Publicación/LinkedIn.
+Comprensión; explicación
+formal.
+17
+Cómo leer un informe
+fechado.
+Video breve.
+Educación; consultar fuente.
+18
+Glosario de un término.
+Historia.
+Claridad; ampliar explicación.
+19
+El mercado, explicado.
+Artículo sobre fuente revisada.
+Contexto; informe completo.
+20
+Control de versiones y
+enlaces.
+Trabajo interno.
+Evitar información vencida.
+
+
+## Página 18
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+18
+Día
+Tema y acción
+Formato/canal posible
+Objetivo y siguiente paso
+21
+Resumen de lectura.
+Email autorizado.
+Lectura y respuestas.
+22
+Una cartera también necesita
+conversación.
+Email a clientes habilitados.
+Revisar objetivos.
+23
+Qué hace la mesa de
+operaciones.
+Entrevista breve.
+Comprender funciones.
+24
+Costos: preguntas que
+conviene hacer.
+Carrusel sin tarifario no validado.
+Transparencia; pedir detalle.
+25
+Elegir próxima pregunta
+educativa.
+Historia con opciones.
+Escucha editorial.
+26
+Tres pasos para preparar una
+reunión.
+Publicación.
+Consulta pertinente.
+27
+Revisar calidad de consultas.
+Trabajo interno.
+Ajustar mensajes.
+28
+Preguntas frecuentes
+actualizadas.
+Página o artículo.
+Resolver barreras.
+29
+Recordatorio de contacto
+confirmado.
+Pieza institucional.
+Solicitar información.
+30
+Evaluación del ciclo y
+próximos temas.
+Informe interno.
+Decidir qué continuar y corregir.
+
+
+## Página 19
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+19
+16. Banco de textos breves
+Todos los textos siguientes son propuestas creativas para adaptar y revisar, sin datos de coyuntura ni promesas de
+rendimiento.
+Pieza
+Titular
+Desarrollo
+Acción
+Anuncio 1
+Empezá por tus preguntas.
+Conocé un proceso de asesoramiento que
+parte de objetivos y perfil.
+Solicitá información.
+Anuncio 2
+Invertir empieza por entender.
+Opciones, condiciones y riesgos merecen una
+explicación.
+Conocé el proceso.
+Anuncio 3
+Una mirada al mundo, desde
+Uruguay.
+Conocé el ecosistema local e internacional
+que presenta Bengochea.
+Explorá sus servicios.
+Anuncio 4
+Tus objetivos cambian.
+Si tus circunstancias cambiaron, conversalo
+con tu asesor.
+Contactá por tu canal habitual.
+Anuncio 5
+Una historia que empieza en
+1967.
+Conocé la trayectoria y el equipo de
+Bengochea.
+Leé su historia.
+Anuncio 6
+¿Qué conviene preguntar
+primero?
+Horizonte, disponibilidad y costos son parte
+de la conversación.
+Prepará tu consulta.
+Pieza institucional
+Cercanía para conversar.
+Mirada para explorar.
+Asesoramiento e inversiones locales e
+internacionales, según la oferta
+documentada.
+Conocé Bengochea.
+Invitación
+Una pregunta, una
+explicación.
+Un encuentro para ordenar conceptos de
+inversión con el equipo.
+Consultá fecha y modalidad
+confirmadas.
+Presentación corta propuesta: «Bengochea ofrece asesoramiento e intermediación en inversiones, con acceso a
+instrumentos locales e internacionales y una trayectoria que comienza en 1967. Su propuesta publicada combina
+objetivos del inversor, explicación y seguimiento».
+Bio propuesta: «Inversiones locales e internacionales. Asesoramiento y seguimiento. Trayectoria desde 1967.
+Conocé nuestros servicios y condiciones». Adaptar a los límites y campos vigentes del canal al implementarla.
+
+
+## Página 20
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+20
+17. Secuencia de tres emails
+Usar solo con destinatarios habilitados para ese propósito y un mecanismo de preferencias o baja operativo. No se
+envió ningún mensaje.
+Email 1 · Conocer
+Asunto: Una primera conversación sobre tus objetivos.
+Preencabezado: Conocé cómo presenta Bengochea su proceso de asesoramiento.
+«Toda conversación puede empezar con una pregunta: qué querés lograr, en qué plazo y qué necesitás entender.
+En Bengochea, el proceso publicado parte de escuchar y conocer los objetivos del inversor. Si querés saber cómo
+funciona, solicitá información por nuestro canal de contacto».
+Acción: conocer el proceso o solicitar información por una ruta confirmada.
+Email 2 · Comprender
+Asunto: Antes del instrumento, las preguntas.
+Preencabezado: Una guía para preparar tu primera reunión.
+«No todas las alternativas tienen las mismas condiciones. Antes de una reunión, podés anotar tu horizonte, cuándo
+podrías necesitar el dinero y qué dudas tenés sobre riesgos, costos y disponibilidad. No hace falta resolverlas solo: la
+conversación sirve para entenderlas».
+Acción: leer la guía o responder con una pregunta general, sin enviar documentación sensible por una vía no
+confirmada.
+Email 3 · Dar el siguiente paso
+Asunto: ¿Querés conocer los próximos pasos?
+Preencabezado: Información sobre el servicio, sus condiciones y el proceso de consulta.
+«Si querés conocer la propuesta de Bengochea, podés solicitar una conversación informativa. El equipo podrá
+explicarte los servicios disponibles, las condiciones de las cuentas y qué información necesita para avanzar. La
+elección de instrumentos requiere considerar tu situación y los riesgos correspondientes».
+Acción: solicitar contacto. No prometer una cuenta aprobada, una fecha de apertura ni un resultado.
+
+
+## Página 21
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+21
+18. Estructura de página de campaña
+Encabezado: «Invertir empieza por entender». Bajada: «Conocé una propuesta de asesoramiento que parte de tus
+objetivos y te ayuda a conversar sobre alternativas, condiciones y riesgos». Botón: «Solicitar información».
+Bloque 1: qué hace la empresa, con alcance local e internacional. Bloque 2: escuchar, entender, diseñar y revisar.
+Bloque 3: trayectoria con fecha y enlace a historia. Bloque 4: familias de servicios, sin prometer adecuación
+universal. Bloque 5: preguntas frecuentes. Cierre: contacto confirmado, documentación institucional y condiciones
+aplicables.
+Formulario inicial propuesto: nombre, medio de contacto y motivo general. Cualquier campo y consentimiento
+debe ajustarse al proceso real y a la información de privacidad aplicable. No pedir saldos, identificaciones o
+posiciones de cartera para una simple consulta publicitaria. La recolección de datos y el tratamiento no están
+implementados en este trabajo.
+Confirmación de recepción propuesta: «Recibimos tu consulta. El equipo te contactará por el medio indicado».
+Añadir plazo únicamente si existe uno confirmado. El destino de cada consulta debe tener un responsable comercial
+definido.
+
+
+## Página 22
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+22
+19. Identidad visual: lo que hay y lo que falta
+El archivo textual no contiene un manual de marca, originales de logotipo, tipografías licenciadas, paleta verificada
+ni criterios de uso. El estilo del HTML y los PDF de este trabajo es editorial y no debe presentarse como identidad
+oficial.
+Dirección visual propuesta: composición sobria, espacio para leer, tipografía clara y jerarquías consistentes.
+Fotografías reales del equipo y oficinas cuando existan permisos. Diagramas para explicar procesos; gráficos
+fechados y atribuidos cuando se disponga del original. Estas son propuestas, no elementos de marca confirmados.
+Solicitar para producir piezas: logo vectorial y versiones autorizadas; paleta y tipografías oficiales; banco de fotos
+con derechos; manual si existe; firmas institucionales; plantillas aprobadas; usos permitidos de logos de terceros;
+nombres y cargos actuales de voceros.
+Evitar: fotos de clientes simulando testimonios reales, pantallas con datos personales, gráficos sin ejes o fechas,
+cifras de rentabilidad destacadas sin contexto y logos de entidades presentados como aval.
+
+
+## Página 23
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+23
+20. Medición y aprendizaje
+Etapa
+Indicador útil
+Definición de trabajo
+Atención
+Visitas útiles al contenido
+Visitas registradas con criterio de lectura o
+interacción definido antes del lanzamiento.
+Interés
+Consultas recibidas
+Contactos atribuibles a la campaña, depurados de
+duplicados y spam.
+Pertinencia
+Consultas pertinentes
+Consultas sobre un servicio disponible que el
+equipo puede atender; criterio acordado con
+comercial.
+Conversación
+Reuniones realizadas
+Reuniones que ocurrieron, diferenciadas de
+solicitudes y reservas.
+Conversión
+Avances reales del proceso
+Hitos comerciales confirmados en el sistema
+autorizado; no igualar clic con cliente.
+Relación
+Preguntas resueltas y revisiones
+Registro acordado de respuestas y conversaciones
+completadas.
+Fórmulas internas: costo por consulta pertinente = inversión de medios / consultas pertinentes; conversión de
+consulta a reunión = reuniones realizadas / consultas pertinentes; conversión de visita a consulta = consultas válidas
+/ visitas del período con la misma atribución. Si no hay denominador, informar «sin datos», no cero.
+No hay base para fijar objetivos numéricos de retorno, presupuesto o volumen. Primero registrar una línea de base,
+duración del ciclo comercial y capacidad de respuesta. Comparar variantes equivalentes y cambiar una variable
+principal por prueba.
+Convención propuesta de seguimiento: fuente, medio, campaña y pieza; por ejemplo, campaña «entender», pieza
+«carrusel-preguntas-a». No incorporar información personal a las etiquetas ni a las URLs.
+
+
+## Página 24
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+24
+21. Flujo de producción y publicación
+1. Elegir objetivo, público hipotético, pieza y siguiente paso.
+2. Registrar las afirmaciones y sus referencias documentales.
+3. Confirmar vigencia de cualquier condición comercial, dato institucional o coyuntura.
+4. Redactar y diseñar con fuente, período y atribución donde corresponda.
+5. Asignar revisión técnica al área que conoce el servicio; cuando proceda, revisión de cumplimiento según el
+proceso de la empresa.
+6. Verificar enlace, contacto, formulario y responsable de recepción.
+7. Guardar la versión aprobada y su fecha; publicar por el canal autorizado.
+8. Registrar consultas, respuestas y resultados; corregir la siguiente edición.
+Este flujo es una propuesta de trabajo, no la descripción de un circuito de aprobación actualmente implementado.
+Ficha mínima de pieza: código; objetivo; público; idea; texto; canal; formato; CTA; destino; afirmaciones y fuentes;
+derechos de imágenes; responsable; fecha de revisión; estado; resultado.
+Ficha de campaña: problema; propuesta; documentos que la respaldan; objetivo comercial; indicadores; recursos;
+duración; responsables; capacidad de respuesta; criterio de ajuste o cierre. No completar presupuesto o proyección
+sin información de la empresa.
+
+
+## Página 25
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+25
+22. Información pendiente para completar la
+estrategia
+Prioridad
+Dato faltante
+Para qué sirve
+Antes de publicar
+Nombre legal y uso de marca actuales.
+Firmas y referencias correctas.
+Antes de publicar
+Servicios, mínimos, costos y condiciones vigentes.
+Evitar trasladar versiones históricas.
+Antes de publicar
+Registro, custodia y cuentas por modalidad.
+Formular afirmaciones institucionales precisas.
+Antes de publicar
+Canales, dominio, contacto y dirección confirmados.
+Enviar consultas a un destino real.
+Antes de producir
+Manual de identidad y permisos visuales.
+Diseñar con marca oficial.
+Antes de usar research
+Autoría, permiso y revisión técnica del informe
+elegido.
+Evitar atribución incorrecta o contenido vencido.
+Para priorizar públicos
+Segmentos y necesidades observados por
+comercial.
+Sustituir hipótesis por evidencia.
+Para invertir en medios
+Presupuesto, capacidad y datos de campañas
+previas.
+Definir alcance y pruebas.
+Para medir
+Hitos del proceso comercial y herramienta
+autorizada.
+Medir conversaciones y avances reales.
+Para contenido humano
+Voceros, disponibilidad y consentimiento.
+Producir entrevistas reales.
+Para casos
+Evidencia y autorizaciones de testimonios.
+No inventar resultados ni experiencias.
+
+
+## Página 26
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+26
+23. Brief listo para entregar a diseño y
+redacción
+Proyecto: Bengochea / campaña de conocimiento del servicio. Objetivo: consultas informativas pertinentes.
+Público inicial: personas que exploran inversiones, sujeto a validación comercial. Idea: invertir empieza por
+entender. Mensaje: una conversación sobre objetivos, horizonte y preguntas precede a la elección de instrumentos.
+Pruebas: proceso publicado, equipo y trayectoria desde 1967. Piezas iniciales: carrusel de seis placas, video breve,
+artículo de proceso y página de consulta. Acción: solicitar información por canal confirmado. Tono: cercano, claro y
+sereno. Evitar: promesas de resultado, urgencia artificial, costos no validados y apariencia de aval de terceros.
+Medir: consultas pertinentes y reuniones efectivas. Fuentes: D002, D003, D004, D006, D008 y D012. Pendientes:
+identidad visual, condiciones actuales, destino y responsable.
+
+
+## Página 27
+BENGOCHEA · MARKETING Y COMUNICACIÓN · 22/10/2026
+27
+24. Fuentes y alcance
+La base documental es la carpeta original de 200 Markdown, depurada en 103 documentos. Se usaron
+principalmente las páginas de empresa, ecosistema, historia y contacto, los códigos institucionales y el documento
+de costos 2025. Las campañas, públicos, calendario, voz, página y métricas son propuestas editoriales de este
+manual.
+Referencia
+Documento
+URL de origen
+D001
+Contacto
+https://gbengochea.com.uy/contacto.php
+D002
+Ecosistema
+https://gbengochea.com.uy/ecosistema.php
+D003
+Nosotros
+https://gbengochea.com.uy/nosotros.php
+D004
+Historia
+https://gbengochea.com.uy/historia.php
+D005
+Inicio
+https://gbengochea.com.uy/
+D006
+Buenas prácticas 2025
+https://gbengochea.com.uy/files/codigo-de-buenas-pract
+icas-2025.pdf
+D007
+Ética 2025
+https://gbengochea.com.uy/files/codigo-de-etica-2025.p
+df
+D008
+Servicios y costos 2025
+https://gbengochea.com.uy/files/servicios-y-costos-2025.
+pdf
+D012
+Certificado BVM
+https://gbengochea.com.uy/files/certificado-de-la-bvm.p
+df
+No se hicieron entrevistas, estudio de competencia, verificación de datos actuales ni validación de reglas de
+plataformas. Este manual organiza la información disponible y desarrolla material de trabajo; no supone campañas
+publicadas ni resultados obtenidos.

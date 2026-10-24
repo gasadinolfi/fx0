@@ -30,6 +30,9 @@ import { imageThumbnail } from './image-thumbnail'
 import dynamic from 'next/dynamic.js'
 import type { LocalLogEntry } from './debug-panel'
 import NewChat from './new-chat'
+import type { GbSelection } from './gb-workbench'
+const GbWorkbench = dynamic(() => import('./gb-workbench'), { ssr: false })
+const GbEmptyPreview = dynamic(() => import('./gb-workbench').then(module => module.GbEmptyPreview), { ssr: false })
 
 // Rarely opened and pulls in Sheet and Tabs; loaded on first open, not with the page.
 const DebugPanel = dynamic(() => import('./debug-panel'), { ssr: false })
@@ -189,6 +192,7 @@ interface ChatAppProps {
   boot: Promise<ChatBoot>
   preference?: Promise<PagePreference>
   defaultModel: string
+  gb?: boolean
 }
 
 function BootLoader<T>({ boot, onBoot }: { boot: Promise<T>; onBoot: (data: T) => void }) {
@@ -262,7 +266,7 @@ function ActivityLine({ label, startedAt }: { label: string; startedAt: number |
   )
 }
 
-export default function ChatApp({ account, sidebar, boot, preference, defaultModel }: ChatAppProps) {
+export default function ChatApp({ account, sidebar, boot, preference, defaultModel, gb = false }: ChatAppProps) {
   const [initialState] = useState(() => replayEvents([], DEFAULT_VIEW))
   const [initialGeneration] = useState<GenerationOptions>(() => ({ model: '', effort: '', fast: false, defaultModel }))
   // undefined until the request's data arrives; null has no chat identity.
@@ -270,6 +274,8 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   const [team, setTeam] = useState<string | null>(null)
   const [freePrompts, setFreePrompts] = useState<number | null>(null)
   const [sessionId, setSessionId] = useState('draft')
+  const [gbSelection, setGbSelection] = useState<GbSelection>({ sessionId: 'draft', campaignId: null })
+  const workspaceById = useRef(new Map<string, boolean>())
   const [trialChat, setTrialChat] = useState(false)
   const [sessions, setSessions] = useState<SessionInfo[]>([])
   const [entries, setEntries] = useState<ChatEntry[]>(initialState.entries)
@@ -388,7 +394,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   }
   // On a phone the conversation and the preview take turns, so the visitor picks one;
   // a wide screen shows both and the preview is always open.
-  const [previewChosen, setPreviewChosen] = useState(true)
+  const [previewChosen, setPreviewChosen] = useState(!gb)
   const [wide, setWide] = useState(true)
   const previewOpen = previewChosen || wide
   const [startedTurns, setStartedTurns] = useState<Set<number>>(initialState.startedTurns)
@@ -511,7 +517,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
       sidebar: document.cookie.includes('fx0-sidebar-collapsed=1'),
       agent: document.cookie.includes('fx0-agent-collapsed=1'),
     })
-    setPreviewChosen(isPreviewOpenFromSearch(window.location.search))
+    setPreviewChosen(gb && !new URLSearchParams(window.location.search).has('view') ? false : isPreviewOpenFromSearch(window.location.search))
     setClock(Date.now())
   }, [])
 
@@ -542,7 +548,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
     const onPopState = () => {
       const params = new URLSearchParams(window.location.search)
       const nextSession = sanitizeSessionId(params.get('s'))
-      const nextPreviewOpen = isPreviewOpenFromSearch(window.location.search)
+      const nextPreviewOpen = gb && !params.has('view') ? false : isPreviewOpenFromSearch(window.location.search)
       setPreviewChosen(nextPreviewOpen)
       if (nextSession !== activeSession.current) void switchSessionRef.current(nextSession, false)
     }
@@ -913,6 +919,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
     const request = fetchUi(`/api/session?session=${encodeURIComponent(id)}`)
       .then(async (response) => {
         if (!response.ok) throw new Error(`session failed: ${response.status}`)
+        workspaceById.current.set(id, response.headers.get('x-fx0-workspace') === 'gb')
         const snapshot = (await response.json()) as SessionSnapshot
         if (snapshot.transcript?.version !== 1 || !isSessionView(snapshot.transcript.view)) throw new Error('session response is missing its transcript')
         cacheSession(id, snapshot)
@@ -938,6 +945,8 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
     try {
       const snapshot = cached ?? (await loadSession(id))
       if (signedOut.current) return
+      const targetGb = workspaceById.current.get(id) ?? gb
+      if (targetGb !== gb) { window.location.assign(`${targetGb ? '/gb' : '/'}?s=${encodeURIComponent(id)}`); return }
       showSession(id, snapshot)
       setChatReady(true)
       if (pushHistory) {
@@ -973,7 +982,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
     stickToBottom.current = true
     setEntries(state.entries)
     applyCurrentView(state.view)
-    setPreviewChosen(isPreviewOpenFromSearch(window.location.search))
+    setPreviewChosen(gb && !new URLSearchParams(window.location.search).has('view') ? false : isPreviewOpenFromSearch(window.location.search))
     setDebugOpen(false)
     setChatMenuOpen(false)
     setActiveTurnId(state.activeTurnId)
@@ -1179,6 +1188,10 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   }
 
   function send(value: string, images: AttachedImage[] = []): boolean {
+    if (gb && (gbSelection.sessionId !== sessionId || !gbSelection.campaignId)) {
+      setInteractionNotice({ tone: 'error', text: 'Esperá a que cargue el contexto de GB o recargá la mesa.' })
+      return false
+    }
     if (signedOut.current) return false
     if (booting) {
       // A suggestion fills an empty composer; it never replaces an unsent draft.
@@ -1293,6 +1306,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           author: name,
+          gb: gb ? { campaignId: gbSelection.campaignId } : undefined,
           text: value,
           clientId,
           afterSeq,
@@ -1710,7 +1724,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   )
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+    <div className={cn("flex h-dvh overflow-hidden bg-background text-foreground", gb && "gb-surface")}>
       <Suspense fallback={null}><BootLoader boot={account} onBoot={adoptAccount} /></Suspense>
       <Suspense fallback={null}><BootLoader boot={sidebar} onBoot={adoptSidebar} /></Suspense>
       <Suspense fallback={null}>
@@ -1825,7 +1839,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
                 {region((view) => {
                   const title = sessions.find((session) => session.id === view.sessionId)?.title ?? view.snapshot.summary?.title ?? (
                     <>
-                      <span className="[html.chat-url_&]:hidden">Design</span>
+                      <span className="[html.chat-url_&]:hidden">{gb ? "Mesa de trabajo" : "Design"}</span>
                       <Skeleton className="hidden h-3.5 w-40 [html.chat-url_&]:block" />
                     </>
                   )
@@ -1952,6 +1966,8 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
             )}
           </header>
 
+          {gb && <GbWorkbench sessionId={sessionId} enabled={isAuthenticated && !authBlocked} busy={awaiting || activeTurnId != null} empty={entries.length === 0} onContext={setGbSelection} onNew={newDesign} onSend={sendFromTranscript} />}
+
           <div
             ref={threadRef}
             onScroll={onThreadScroll}
@@ -1962,7 +1978,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
                 where it does after the switch and no line rewraps. */}
             <div ref={threadContentRef} className="mx-auto mb-auto w-full max-w-2xl px-4 py-4 sm:px-5">
               {region((view) => (
-                <Transcript sessionId={view.sessionId} entries={view.snapshot.transcript.entries}
+                <Transcript hideSuggestions={gb} sessionId={view.sessionId} entries={view.snapshot.transcript.entries}
                   activeTurnId={view.snapshot.transcript.activeTurnId} startedTurns={view.snapshot.transcript.startedTurns}
                   drafting={designDraft != null}
                   onOpenRevision={canAccessSession ? openRevision : undefined} onSend={sendFromTranscript} />
@@ -1986,6 +2002,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
           <div className="order-3 shrink-0 lg:order-none">
             <Composer
               ref={composerRef}
+              workspaceGb={gb}
               persistSettings={canAccessSession && !preparingPrompt && !user?.guest}
               trial={user?.guest === true}
               freePrompts={freePrompts}
@@ -2049,6 +2066,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
             </div>
             {region((view) => (
               <PreviewPane
+                introContent={gb ? <GbEmptyPreview campaignId={gbSelection.campaignId} /> : undefined}
                 source={{ kind: 'design', sessionId: view.sessionId, revision: view.snapshot.transcript.view.artifactRevision }}
                 viewing={viewing}
                 draft={designDraft?.html ?? null}

@@ -1,0 +1,184 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { GB_ACTIONS, GB_SEED_CAMPAIGNS, type GbWorkspace, type GbSource } from '../lib/gb-model'
+import { fetchUi } from './auth-ui'
+import { Button } from './ui/button'
+import { Textarea } from './ui/textarea'
+import { Skeleton } from './ui/skeleton'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from './ui/sheet'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
+import Markdown from './markdown'
+
+export interface GbSelection { sessionId: string; campaignId: string | null }
+interface Props {
+  sessionId: string; busy: boolean; empty: boolean; enabled: boolean;
+  onContext: (selection: GbSelection) => void; onNew: () => void; onSend: (text: string) => unknown;
+}
+export default function GbWorkbench({ sessionId, busy, empty, enabled, onContext, onNew, onSend }: Props) {
+  const [state, setState] = useState<GbWorkspace | null>(null)
+  const [campaignId, setCampaignId] = useState('entender')
+  const [loadedFor, setLoadedFor] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState('guide')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [edit, setEdit] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [source, setSource] = useState<{ meta: GbSource; text: string; base64?: string } | null>(null)
+  const [sourceLoading, setSourceLoading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const selected = state?.campaigns.find(c => c.id === campaignId)
+  const guide = state?.guides.find(g => g.id === (selected?.guideId ?? state.activeGuideId))
+  const activeGuide = state?.guides.find(g => g.id === state.activeGuideId)
+  const ready = enabled && loadedFor === sessionId && !!selected && !saving
+  const refresh = useCallback(async (signal?: AbortSignal) => {
+    if (!enabled) return
+    onContext({ sessionId, campaignId: null })
+    const response = await fetchUi(`/api/gb?session=${encodeURIComponent(sessionId)}`, { signal })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error ?? 'No se pudo abrir la mesa.')
+    const next = data.state as GbWorkspace
+    const requested = new URLSearchParams(window.location.search).get('c')
+    const id = data.campaignId ?? (next.campaigns.some(c => c.id === requested) ? requested : 'entender')
+    setState(next); setCampaignId(id); setLoadedFor(sessionId); setError('')
+    setEdit(next.proposal?.text ?? next.guides.find(g => g.id === next.activeGuideId)!.text)
+    onContext({ sessionId, campaignId: id })
+  }, [enabled, sessionId, onContext])
+  useEffect(() => {
+    const controller = new AbortController()
+    void refresh(controller.signal).catch(error => { if (!controller.signal.aborted) setError(error.message) })
+    return () => controller.abort()
+  }, [refresh])
+  useEffect(() => { if (!enabled) { setState(null); setSource(null); setOpen(false); setLoadedFor(null) } }, [enabled])
+
+  async function mutate(action: Record<string, unknown>) {
+    if (!state || saving) return null
+    setSaving(true); setError('')
+    try {
+      const response = await fetchUi('/api/gb', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...action, revision: state.revision }) })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo guardar.')
+      const next = data.state as GbWorkspace
+      setState(next); setEdit(next.proposal?.text ?? next.guides.find(g => g.id === next.activeGuideId)!.text)
+      setEditing(false)
+      return next
+    } catch (error) { setError((error as Error).message); return null } finally { setSaving(false) }
+  }
+  function choose(id: string) {
+    if (busy || saving) return
+    const url = new URL(window.location.href); url.searchParams.set('c', id); window.history.replaceState(null, '', url)
+    if (sessionId !== 'draft') onNew()
+    setCampaignId(id); setLoadedFor('draft'); onContext({ sessionId: 'draft', campaignId: id })
+  }
+  async function upload(file: File) {
+    if (!state || saving) return
+    setSaving(true); setError('')
+    try {
+      if (file.size > 3 * 1024 * 1024) throw new Error('El archivo debe ser menor de 3 MB; las imágenes, de 700 KB.')
+      const form = new FormData(); form.set('file', file); form.set('revision', String(state.revision))
+      const response = await fetchUi('/api/gb', { method: 'POST', body: form })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo incorporar el insumo.')
+      setState(data.state); setEdit(data.state.proposal.text); setTab('review'); setSource(null)
+    } catch (error) { setError((error as Error).message) } finally { setSaving(false) }
+  }
+  async function viewSource(id: string) {
+    setSourceLoading(true); setError(''); setSource(null)
+    try {
+      const response = await fetchUi(`/api/gb?source=${encodeURIComponent(id)}`)
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error ?? 'No se pudo leer el insumo.')
+      setSource(data)
+    } catch (error) { setError((error as Error).message) } finally { setSourceLoading(false) }
+  }
+  function downloadGuide() {
+    if (!guide) return
+    const url = URL.createObjectURL(new Blob([guide.text], { type: 'text/markdown;charset=utf-8' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'DESIGN.md'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+  async function createCampaign(form: FormData) {
+    const next = await mutate({ action: 'campaign', ...Object.fromEntries(form) })
+    if (next) { choose(next.campaigns.at(-1)!.id); setOpen(false) }
+  }
+  function panel(next: string) { setTab(next); setOpen(true) }
+  if (!enabled) return null
+  return <section aria-label="Mesa de trabajo de Bengochea" className="gb-workbench border-b border-border px-4 py-4 sm:px-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-3"><span className="gb-monogram" aria-hidden="true">GB</span><div><p className="text-sm font-semibold tracking-wide">BENGOCHEA</p><p className="text-xs text-muted-foreground">Mesa de trabajo · Privada</p></div></div>
+      <Button variant="ghost" size="sm" onClick={() => panel('guide')}>Guía e insumos{state?.proposal ? ' · 1 propuesta' : ''}</Button>
+    </div>
+    {!state ? <div className="py-5"><Skeleton className="h-8 w-4/5" /><Button variant="ghost" size="sm" onClick={() => void refresh().catch(e => setError(e.message))}>Volver a cargar</Button></div> : <>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <label className="sr-only" htmlFor="gb-campaign">Campaña</label>
+        <select id="gb-campaign" value={campaignId} disabled={!ready || busy} onChange={e => choose(e.target.value)} className="min-h-9 min-w-0 max-w-full flex-1 border border-input bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          {state.campaigns.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+        </select>
+        <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => panel('campaigns')}>Nueva campaña</Button>
+      </div>
+      {selected && <>
+        {empty ? <div className="gb-intro py-7"><p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">{selected.page ? `Propuesta del manual · Página ${selected.page}` : 'Campaña propia'}</p><h2 className="max-w-lg text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{selected.title}</h2><p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground">{selected.message} {selected.objective}</p></div> : <p className="mt-3 text-xs text-muted-foreground">{selected.message}</p>}
+        <div className="mt-3 grid grid-cols-2 gap-2">{GB_ACTIONS.map((action, i) => <Button key={action.label} variant={i === 0 ? 'default' : 'outline'} disabled={!ready || busy} className="h-auto min-h-10 justify-start whitespace-normal text-left text-xs sm:text-sm" onClick={() => onSend(action.prompt)}>{action.label}<span className="ml-auto" aria-hidden="true">↗</span></Button>)}</div>
+        {selected.guideId !== state.activeGuideId && <div className="mt-3 flex flex-wrap items-center gap-2"><p className="text-xs text-muted-foreground">Esta campaña conserva una guía anterior.</p><Button variant="ghost" size="sm" disabled={saving || busy} onClick={() => void mutate({ action: 'adopt', campaignId })}>Adoptar guía vigente</Button></div>}
+      </>}
+    </>}
+    {error && <div role="alert" className="mt-3 text-sm text-destructive">{error} <Button variant="ghost" size="sm" onClick={() => void refresh().catch(e => setError(e.message))}>Recargar</Button></div>}
+    <Sheet open={open} onOpenChange={setOpen}><SheetContent className="gb-surface w-[min(96vw,760px)]">
+      <SheetHeader className="border-b border-border p-5"><div className="flex items-center justify-between"><SheetTitle>Contexto de Bengochea</SheetTitle><SheetClose asChild><Button variant="ghost" size="sm">Cerrar</Button></SheetClose></div><SheetDescription>Guía, referencias y campañas de tu cuenta.</SheetDescription></SheetHeader>
+      {state && <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col gap-4 p-5">
+        <TabsList className="h-auto flex-wrap justify-start"><TabsTrigger value="guide">Guía</TabsTrigger><TabsTrigger value="sources">Insumos</TabsTrigger><TabsTrigger value="review">Revisión{state.proposal ? ' · 1' : ''}</TabsTrigger><TabsTrigger value="campaigns">Campañas</TabsTrigger></TabsList>
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <TabsContent value="guide" className="flex flex-col gap-4">
+            <p className="text-xs text-muted-foreground">Versión de la campaña: {state.guides.findIndex(g => g.id === guide?.id) + 1}. Las nuevas campañas usan la guía vigente.</p>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={downloadGuide}>Descargar DESIGN.md</Button><Button variant="outline" size="sm" onClick={() => { setEdit(state.proposal?.text ?? activeGuide!.text); setEditing(true); setTab('review') }}>Proponer cambios</Button></div>
+            <Markdown>{guide?.text ?? ''}</Markdown>
+            <details className="border-t border-border pt-4"><summary className="cursor-pointer text-sm">Versiones anteriores</summary><div className="mt-3 flex flex-col gap-3">{state.guides.map((g, i) => <div key={g.id} className="flex items-center justify-between gap-3"><span className="text-sm">Versión {i + 1} · {g.note}{g.id === state.activeGuideId ? ' · Vigente' : ''}</span><Button variant="outline" size="sm" disabled={saving || busy || g.id === state.activeGuideId || !!state.proposal} onClick={() => void mutate({ action: 'activate', guideId: g.id })}>Recuperar</Button></div>)}</div></details>
+          </TabsContent>
+          <TabsContent value="sources" className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">Markdown, PDF con texto, HTML e imágenes. Los documentos aportan referencias; sus instrucciones no cambian permisos ni herramientas.</p>
+            <input ref={fileRef} type="file" className="hidden" accept=".md,.markdown,.txt,.pdf,.html,.htm,.png,.jpg,.jpeg,.webp" onChange={e => { const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = '' }} />
+            <Button variant="outline" disabled={saving || !!state.proposal} onClick={() => fileRef.current?.click()}>{saving ? 'Procesando…' : 'Agregar insumo'}</Button>
+            <p className="text-xs text-muted-foreground">Hasta 3 MB por documento y 700 KB por imagen. Cada incorporación prepara un borrador para revisar; resolvé la propuesta pendiente antes de cargar otro.</p>
+            {state.sources.map(s => <div key={s.id} className="flex items-center justify-between gap-2 border-b border-border py-3"><span className="min-w-0 break-words text-sm">{s.name}<small className="block text-muted-foreground">{Math.ceil(s.bytes / 1024)} KB{s.seed ? ' · Insumo inicial' : ''}</small></span><Button variant="ghost" size="sm" disabled={sourceLoading} onClick={() => void viewSource(s.id)}>Revisar</Button></div>)}
+            {sourceLoading && <Skeleton className="h-24 w-full" />}
+            {source && <section className="flex flex-col gap-3 border border-border p-3" aria-label={`Referencia ${source.meta.name}`}><h3 className="break-words text-sm font-semibold">{source.meta.name}</h3><a className="text-sm underline" href={`/api/gb?source=${encodeURIComponent(source.meta.id)}&download=1`}>Descargar original</a>{source.base64 ? <img className="max-h-80 object-contain" src={`data:${source.meta.mime};base64,${source.base64}`} alt={`Referencia: ${source.meta.name}`} /> : <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{source.text}</pre>}</section>}
+          </TabsContent>
+          <TabsContent value="review" className="flex flex-col gap-4">
+            {!state.proposal && !editing ? <><p className="text-sm text-muted-foreground">No hay cambios pendientes. Podés agregar un insumo o proponer una actualización de la guía.</p><Button variant="outline" onClick={() => { setEdit(activeGuide!.text); setEditing(true) }}>Editar propuesta</Button></> : <>
+              <p className="text-sm text-muted-foreground">Revisá el borrador y convertí los extractos nuevos en reglas concretas. Aceptar crea una versión; las campañas existentes conservan la suya.</p>
+              <label htmlFor="gb-guide-edit" className="text-sm font-medium">Guía propuesta</label><Textarea id="gb-guide-edit" value={edit} onChange={e => setEdit(e.target.value)} className="min-h-72 font-mono text-xs" />
+              <details open><summary className="cursor-pointer text-sm">Comparar con la guía vigente</summary><GuideComparison before={activeGuide?.text ?? ''} after={edit} /></details>
+              <div className="flex flex-wrap gap-2">{state.proposal ? <><Button disabled={saving || !edit.trim()} onClick={() => void mutate({ action: 'accept', proposalId: state.proposal!.id, text: edit })}>Aceptar nueva versión</Button><Button variant="outline" disabled={saving} onClick={() => void mutate({ action: 'discard' })}>Descartar propuesta</Button></> : <Button disabled={saving || edit === activeGuide?.text || !edit.trim()} onClick={() => void mutate({ action: 'propose', text: edit })}>Guardar para revisión</Button>}</div>
+            </>}
+          </TabsContent>
+          <TabsContent value="campaigns" className="flex flex-col gap-5">
+            <form action={form => void createCampaign(form)} className="flex flex-col gap-3"><fieldset disabled={saving || busy} className="flex flex-col gap-3"><legend className="mb-3 text-sm font-semibold">Nueva campaña</legend>{[['title','Nombre'],['objective','Objetivo'],['audience','Público'],['message','Idea central'],['brief','Brief y referencias']].map(([name,label]) => <label key={name} className="flex flex-col gap-1 text-sm" htmlFor={`gb-new-${name}`}>{label}<Textarea id={`gb-new-${name}`} name={name} required maxLength={name === 'brief' ? 6000 : 500} rows={name === 'brief' ? 3 : 1} /></label>)}<Button type="submit">Crear campaña y abrir mesa</Button></fieldset></form>
+            <div className="flex flex-col gap-4">{state.campaigns.map(c => <section key={c.id} className="border-t border-border pt-4"><h3 className="text-sm font-semibold">{c.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{c.objective} {c.audience}</p><div className="mt-2 flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={busy || saving} onClick={() => { choose(c.id); setOpen(false) }}>Crear en esta campaña</Button>{c.sessionIds.map((id, i) => <a key={id} className="px-2 py-1 text-xs underline" href={`/gb?s=${encodeURIComponent(id)}`}>Conversación {i + 1}</a>)}</div></section>)}</div>
+          </TabsContent>
+        </div>
+      </Tabs>}
+    </SheetContent></Sheet>
+  </section>
+}
+function GuideComparison({ before, after }: { before: string; after: string }) {
+  const a = before.split('\n'), b = after.split('\n')
+  let start = 0, end = 0
+  while (start < Math.min(a.length, b.length) && a[start] === b[start]) start++
+  while (end < Math.min(a.length, b.length) - start && a[a.length - 1 - end] === b[b.length - 1 - end]) end++
+  const removed = a.slice(start, a.length - end).join('\n'), added = b.slice(start, b.length - end).join('\n')
+  return <div className="mt-3 grid gap-3 text-xs"><p className="text-muted-foreground">{start} líneas iniciales y {end} líneas finales sin cambios.</p>{removed && <div className="border border-border p-3"><p className="mb-2 font-semibold">− Texto anterior</p><pre className="whitespace-pre-wrap break-words">{removed}</pre></div>}{added && <div className="border border-primary p-3"><p className="mb-2 font-semibold">+ Texto propuesto</p><pre className="whitespace-pre-wrap break-words">{added}</pre></div>}{!removed && !added && <p>Sin diferencias.</p>}</div>
+}
+
+export function GbEmptyPreview({ campaignId }: { campaignId: string | null }) {
+  const title = GB_SEED_CAMPAIGNS.find(c => c.id === campaignId)?.title ?? 'Tu próxima idea'
+  return <div className="flex flex-col gap-5" aria-label="Referencia visual de GB">
+    <div className="gb-reference-poster relative flex aspect-[4/5] flex-col justify-between overflow-hidden border border-border p-7">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Bengochea / Comunicación</p>
+      <h2 className="relative max-w-xs text-3xl font-semibold leading-tight tracking-tight">{title}</h2>
+      <svg viewBox="0 0 300 190" className="w-full text-primary" fill="none" stroke="currentColor" strokeWidth="0.7" aria-hidden="true">{[70,110,150,190,230].map((x,i)=><g key={x} opacity={1-i*.12}><circle cx={x} cy="95" r="56" /><ellipse cx={x} cy="95" rx="22" ry="56" /><ellipse cx={x} cy="95" rx="56" ry="20" /></g>)}</svg>
+      <p className="border-t border-border pt-3 text-xs tracking-wide">BENGOCHEA · INVERSIONES</p>
+    </div>
+    <p className="text-xs leading-5 text-muted-foreground">Referencia de estilo. Elegí una acción o contá tu idea; la pieza que creemos aparecerá acá.</p>
+  </div>
+}

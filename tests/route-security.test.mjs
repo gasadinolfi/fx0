@@ -11,6 +11,18 @@ import { AuthError } from '../lib/accounts.ts'
 // route handlers, page and metadata all run unchanged. No network or libfx.
 const root = new URL('../', import.meta.url)
 const mocks = {
+  'lib/gb-store.ts': `
+    import { AuthError } from './accounts.ts';
+    export async function readGbBinding(id) { return globalThis.securityTest.gbBindings?.get(id) ?? null; }
+    export async function readGbWorkspace(owner) { const s = globalThis.securityTest; s.gbOwners ??= []; s.gbOwners.push(owner); return structuredClone(s.gbWorkspace ?? { revision: 0, guides: [], campaigns: [] }); }
+    export async function mutateGb(owner, revision, change) { const state = await readGbWorkspace(owner); if (state.revision !== revision) throw new AuthError(409); change(state); state.revision++; globalThis.securityTest.gbWorkspace = state; return state; }
+    export async function readGbSource(owner,id) { const source=globalThis.securityTest.gbSources?.get(owner+':'+id); if (!source) throw new AuthError(404); return source; }
+    export async function addGbSource() { throw new Error('not used in route security tests'); }
+    export async function bindGbSession() {}
+    export async function forgetGbSession() {}
+    export async function gbPromptImages() { return []; }
+    export function gbCampaign(state,id) { const c=state.campaigns.find(c=>c.id===id); if (!c) throw new AuthError(404); return c; }
+  `,
   'lib/trial.ts': `
     export const trialEnabled = () => !!globalThis.securityTest.trialEnabled;
     export const getGuestSession = async () => globalThis.securityTest.guest ?? null;
@@ -138,6 +150,7 @@ const mocks = {
 }
 registerHooks({
   resolve(specifier, context, next) {
+    if (specifier.startsWith('@/')) return next(new URL('../' + specifier.slice(2) + '.ts', import.meta.url).href, context)
     if (specifier === 'botid/server') return { url: 'security-test:botid', shortCircuit: true }
     if (specifier === '@neondatabase/serverless') return { url: 'security-test:neon', shortCircuit: true }
     if (specifier === 'next/headers') return { url: 'security-test:headers', shortCircuit: true }
@@ -145,7 +158,7 @@ registerHooks({
     // after() needs a Next request scope; the prompt route's follow-up is recorded instead.
     if (specifier === 'next/server' && context.parentURL?.endsWith('/app/api/prompt/route.ts')) return { url: 'security-test:next-server', shortCircuit: true }
     // connection() needs a Next request scope too; outside one it only has to resolve.
-    if (specifier === 'next/server.js' && /\/app\/(page\.tsx|api\/(models|session)\/route\.ts)$/.test(context.parentURL ?? '')) return { url: 'security-test:connection', shortCircuit: true }
+    if (specifier === 'next/server.js' && (/\/app\/(page\.tsx|api\/(models|session)\/route\.ts)$/.test(context.parentURL ?? '') || context.parentURL?.endsWith('/components/chat-page.tsx'))) return { url: 'security-test:connection', shortCircuit: true }
     if (specifier.startsWith('.')) {
       let url = new URL(specifier, context.parentURL)
       if (!/\.[cm]?[jt]sx?$/.test(url.pathname)) {
@@ -169,7 +182,7 @@ registerHooks({
     ` }
     const relative = url.startsWith(root.href) ? url.slice(root.href.length) : ''
     if (relative in mocks) return { format: 'module', shortCircuit: true, source: mocks[relative] }
-    if (relative === 'app/page.tsx') {
+    if (relative === 'app/page.tsx' || relative === 'components/chat-page.tsx') {
       return { format: 'module', shortCircuit: true, source: babel.transformSync(readFileSync(new URL(url), 'utf8'), {
         filename: 'page.tsx', babelrc: false, configFile: false,
         presets: [presetTypescript, [presetReact, { runtime: 'automatic' }]],
@@ -235,12 +248,12 @@ function request(path, method = 'GET', id = own, body, origin = process.env.APP_
 }
 const routes = {}
 for (const name of ['answer', 'artifact', 'artifact-frame', 'cancel', 'debug', 'events',
-  'credits', 'model', 'prompt', 'session', 'sessions', 'teams', 'warm']) {
+  'credits', 'model', 'prompt', 'session', 'sessions', 'teams', 'warm', 'gb']) {
   routes[name] = await import(`../app/api/${name}/route.ts`)
 }
 // The model catalog is public on purpose: it carries no account data.
 const modelsRoute = await import('../app/api/models/route.ts')
-const page = await import('../app/page.tsx')
+const page = await import('../components/chat-page.tsx')
 const policy = await import('../lib/route-auth.ts')
 
 test('a human without OAuth can send five sponsored prompts, and the sixth never reaches the agent', async () => {
@@ -754,4 +767,38 @@ test('a page GET never reserves a chat, whatever the ID', async () => {
     assert.ok(!s.trace.includes('reserve') && !s.trace.includes('events'))
     assert.ok(!s.queries.some(({ text }) => text.startsWith('WITH account')))
   }
+})
+
+
+test('GB source access is scoped to the signed-in account and HTML downloads remain inert', async () => {
+  const s=reset({gbSources:new Map([['user_b:private-html',{meta:{id:'private-html',name:'ref.html',mime:'text/html'},text:'safe',base64:Buffer.from('<script>alert(1)</script>').toString('base64')}]])})
+  let response=await routes.gb.GET(new Request('https://fx0.example/api/gb?source=private-html'))
+  assert.equal(response.status,404)
+  s.session=session({userId:'user_b'})
+  response=await routes.gb.GET(new Request('https://fx0.example/api/gb?source=private-html&download=1'))
+  assert.equal(response.status,200)
+  assert.match(response.headers.get('content-disposition'),/^attachment/)
+  assert.match(response.headers.get('content-security-policy'),/sandbox/)
+  assert.equal(response.headers.get('cache-control'),'private, no-store')
+  assert.equal(response.headers.get('x-content-type-options'),'nosniff')
+})
+test('GB acceptance versions the guide without changing campaign pins; stale writes are refused', async () => {
+  const s=reset({gbWorkspace:{revision:0,activeGuideId:'v1',guides:[{id:'v1',text:'Original',sourceIds:[]}],sources:[],campaigns:[{id:'a',guideId:'v1'}],proposal:{id:'p1',baseGuideId:'v1',text:'Proposed',sourceIds:[]}}})
+  const response=await routes.gb.POST(request('gb','POST',null,{revision:0,action:'accept',proposalId:'p1',text:'Revised'}))
+  assert.equal(response.status,200)
+  const {state}=await response.json()
+  assert.equal(state.guides.length,2)
+  assert.equal(state.guides[1].text,'Revised')
+  assert.equal(state.campaigns[0].guideId,'v1')
+  assert.notEqual(state.activeGuideId,'v1')
+  assert.equal((await routes.gb.POST(request('gb','POST',null,{revision:0,action:'adopt',campaignId:'a'}))).status,409)
+  assert.equal((await routes.gb.POST(request('gb','POST',null,{revision:1,action:'adopt',campaignId:'a'}))).status,200)
+  assert.equal(s.gbWorkspace.campaigns[0].guideId,state.activeGuideId)
+  assert.ok(s.gbOwners.every(id=>id==='user_a'))
+})
+test('GB cannot attach a campaign to an existing general chat or rebind another campaign', async () => {
+  reset({records:new Map([[own,{id:own}]]),gbWorkspace:{campaigns:[{id:'a',guideId:'v1'}],guides:[{id:'v1',text:'Guide'}]}})
+  assert.equal((await routes.prompt.POST(request('prompt','POST',own,{text:'Create',gb:{campaignId:'a'}}))).status,409)
+  reset({gbBindings:new Map([[own,{ownerId:'user_a',campaignId:'b'}]]),gbWorkspace:{campaigns:[{id:'a',guideId:'v1'}],guides:[{id:'v1',text:'Guide'}]}})
+  assert.equal((await routes.prompt.POST(request('prompt','POST',own,{text:'Create',gb:{campaignId:'a'}}))).status,409)
 })

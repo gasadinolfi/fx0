@@ -199,3 +199,11 @@ Paid model requests carry the sender's OAuth token only to AI Gateway. Between r
 ## License
 
 [Apache-2.0](LICENSE). The `design.md` styles in [`lib/design-md/`](lib/design-md) come from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), under the [MIT license](lib/design-md/LICENSE).
+
+## Bengochea workbench
+
+`/gb` is a private, account-owned workbench. It starts with the six campaign proposals from the supplied marketing PDF, uses the atlas visual direction, and retains the existing chat, preview, revision history and exports. The initial guide lives in `lib/gb/DESIGN.md`; source originals ship as server-only references, outside `public/`.
+
+It requires the existing authentication/Gateway configuration, `DATABASE_URL`, and `KV_REST_API_URL` / `KV_REST_API_TOKEN`. No additional database migration is needed: workspace versions, sources and campaign bindings use account-scoped Redis keys. Uploads prepare an editable proposal; acceptance creates a new guide version. Existing campaigns adopt it only explicitly. HTML references are extracted as text or downloaded as sandboxed attachments. PDF uploads require extractable text (no OCR); images are PNG/JPEG/WebP, up to 700 KB.
+
+Run `npm run test:gb` for workspace, upload, UI and route-security tests. Video requests produce scripts, and the workbench does not publish or send content.

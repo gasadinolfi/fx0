@@ -43,6 +43,8 @@ export default function DesignExport({
   const [open, setOpen] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [rendering, setRendering] = useState(false)
+  const renderingRef = useRef(false)
   const cached = useRef<{ key: string; html: Promise<string> } | null>(null)
   const key = `${sessionId}:${revision ?? `latest-${latest}`}`
 
@@ -102,6 +104,33 @@ export default function DesignExport({
     } catch (error) {
       if (error instanceof AuthRouteError) return
       onNotice({ tone: 'error', text: 'Unable to download the design. Try again.' })
+    }
+  }
+
+  async function downloadImage(format: 'png' | 'jpg') {
+    if (renderingRef.current) return
+    renderingRef.current = true
+    setRendering(true)
+    setOpen(false)
+    onNotice({ tone: 'status', text: `Rendering ${format.toUpperCase()}…` })
+    try {
+      const [html, { renderDesignImage }] = await Promise.all([load(), import('./design-image')])
+      const blob = await renderDesignImage(html, format)
+      const fileName = designFileName(title).replace(/\.html$/, `.${format}`)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.append(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      onNotice({ tone: 'status', text: `Downloaded ${fileName}.` })
+    } catch (error) {
+      if (!(error instanceof AuthRouteError)) onNotice({ tone: 'error', text: 'Unable to render the image. Try again with a smaller design.' })
+    } finally {
+      renderingRef.current = false
+      setRendering(false)
     }
   }
 
@@ -166,6 +195,18 @@ export default function DesignExport({
           </svg>
           download HTML
         </button>
+        {(['png', 'jpg'] as const).map((format) => (
+          <Button
+            key={format}
+            variant="ghost"
+            size="sm"
+            disabled={rendering}
+            {...fastClick(() => void downloadImage(format))}
+            className="w-full justify-start"
+          >
+            {rendering ? 'Rendering image…' : `download ${format.toUpperCase()}`}
+          </Button>
+        ))}
         <button
           type="button"
           // A plain click, not fastClick: only the click grants a touch or pen tap the

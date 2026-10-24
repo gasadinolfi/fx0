@@ -16,7 +16,7 @@ const root = new URL('../', import.meta.url)
 const projectUrl = new URL('../package.json', import.meta.url).href
 const output = realpathSync(mkdtempSync(join(tmpdir(), 'fx0-html-ui-')))
 after(() => rmSync(output, { recursive: true, force: true }))
-execFileSync(fileURLToPath(new URL('../node_modules/.bin/tsc', import.meta.url)), [
+execFileSync(process.execPath, [fileURLToPath(new URL('../node_modules/typescript/bin/tsc', import.meta.url)),
   '--ignoreConfig', '--outDir', output, '--strict', '--types', 'node',
   '--jsx', 'react-jsx', '--target', 'esnext', '--module', 'esnext',
   '--moduleResolution', 'bundler', '--skipLibCheck', '--esModuleInterop',

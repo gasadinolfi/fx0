@@ -14,7 +14,8 @@
     "test:journal:integration": "node --env-file-if-exists=.env.local --experimental-strip-types --test tests/journal.integration.mjs",
     "test:smoke": "node tests/local-auth-smoke.mjs",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate-database.mjs",
-    "test:trial:integration": "node --experimental-strip-types --test tests/trial.integration.mjs"
+    "test:trial:integration": "node --experimental-strip-types --test tests/trial.integration.mjs",
+    "test:gb": "node --experimental-strip-types --test tests/gb.test.mjs tests/gb-ui.test.mjs tests/route-security.test.mjs tests/runtime.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -28,11 +29,13 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "geist": "^1.7.2",
+    "html2canvas-pro": "^2.5.0",
     "iron-session": "^9.0.1",
     "jose": "^6.2.12",
     "libfx": "0.0.14",
     "next": "^16.4.0",
     "next-themes": "^0.4.6",
+    "pdfjs-dist": "^5.7.284",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",

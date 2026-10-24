@@ -46,6 +46,7 @@ export interface SessionState {
   preferredEffort: string | null
   preferredFast: boolean | null
   // The chat's DESIGN.md, loaded with its stored hash; part of the agent instructions.
+  gbContext?: string | null
   designMd: { name: string; sha: string; text: string } | null
 }
 

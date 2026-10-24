@@ -73,6 +73,8 @@ function Sidebar({
           12px gutter (px-3) plus 12px inside each row's highlight (px-3). */}
       <div className="px-3 pt-3">
         <NewChat onNew={onNew} />
+        <a href="/gb" className="mt-2 flex min-h-9 items-center gap-2 border-t border-sidebar-border px-3 text-[13px] text-foreground-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"><span className="font-semibold">GB</span><span>Mesa de Bengochea</span></a>
+        <a href="/" className="flex min-h-8 items-center px-3 text-xs text-muted-foreground hover:text-foreground">Chat general</a>
       </div>
 
       <ScrollArea aria-busy={loading || undefined} className="min-h-0 w-full flex-1" viewportClassName="sidebar-fade-scroll">
