@@ -802,3 +802,17 @@ test('GB cannot attach a campaign to an existing general chat or rebind another 
   reset({gbBindings:new Map([[own,{ownerId:'user_a',campaignId:'b'}]]),gbWorkspace:{campaigns:[{id:'a',guideId:'v1'}],guides:[{id:'v1',text:'Guide'}]}})
   assert.equal((await routes.prompt.POST(request('prompt','POST',own,{text:'Create',gb:{campaignId:'a'}}))).status,409)
 })
+
+
+test('plate download controls are trusted wrapper UI and geometry reporting stays preview only', async () => {
+  reset()
+  const html = await (await routes['artifact-frame'].GET(request('artifact-frame','GET',own,undefined,'null'))).text()
+  assert.match(html,/Descargar todo/)
+  assert.match(html,/Descargar placa /)
+  assert.match(html,/fx0-social-download-state/)
+  assert.match(html,/event.source===parent&&event.origin===location.origin/)
+  assert.match(html,/event.source!==frame.contentWindow/)
+  const artifact = Buffer.from(html.match(/data:text\/html;base64,([^";]+)/)[1],'base64').toString()
+  assert.match(artifact,/social-pieces/)
+  assert.doesNotMatch(artifact,/Descargar todo|plate-download/)
+})

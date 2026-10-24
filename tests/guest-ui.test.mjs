@@ -1166,3 +1166,44 @@ test('a signed-in chat can open the model picker while a reply is generating', a
   assert.ok(picker)
   assert.equal(picker.props.disabled, false)
 })
+
+
+test('preview downloads accept only the current trusted frame, valid format and plate index', async (t) => {
+  const environment = browser(t)
+  window.location.origin = 'http://localhost'
+  const ui = renderHooks(PreviewPane), calls = [], states = []
+  let finish
+  const pending = new Promise(resolve => { finish = resolve })
+  const props = { source: {kind:'design',sessionId:'own',revision:2}, viewing:null, intro:false, onClose(){}, onDownload(format,piece){calls.push({format,piece});return pending} }
+  const tree = ui.render(props)
+  const frame = find(tree, node => node.type === 'iframe')
+  const source = { postMessage(message){states.push(message.busy)} }
+  frame.props.ref({contentWindow:source})
+  ui.flush()
+  environment.cleanups.push(() => ui.cleanup())
+  const send = (data, origin='http://localhost', from=source) => {
+    const event = new Event('message')
+    Object.defineProperties(event,{data:{value:{type:'fx0-social-download',...data}},origin:{value:origin},source:{value:from}})
+    window.dispatchEvent(event)
+  }
+  send({format:'png',piece:0},'https://other.test')
+  send({format:'png',piece:0},undefined,{})
+  send({format:'gif',piece:0})
+  send({format:'png',piece:-1})
+  send({format:'png',piece:20})
+  send({format:'png',piece:1.5})
+  await Promise.resolve()
+  assert.deepEqual(calls,[])
+  send({format:'jpg',piece:1})
+  send({format:'png',piece:null})
+  await Promise.resolve()
+  assert.deepEqual(calls,[{format:'jpg',piece:1}])
+  assert.deepEqual(states,[true])
+  finish()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(states,[true,false])
+  ui.render({...props,source:{...props.source,revision:3}})
+  send({format:'png',piece:0})
+  await Promise.resolve()
+  assert.equal(calls.length,1,'a stale revision cannot download the new artifact')
+})

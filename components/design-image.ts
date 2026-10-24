@@ -4,12 +4,13 @@ import { validSocialSize, type SocialSize } from '../lib/social-formats'
 
 export type ImageFormat = 'png' | 'jpg'
 export interface DesignImage { blob: Blob; width: number; height: number; safeAdjusted?: boolean }
-export interface ImageExportOptions { size?: SocialSize; formatId?: string }
+export interface ImageExportOptions { size?: SocialSize; formatId?: string; piece?: number }
 
 // Render only inside an opaque origin. Brand HTML never runs in the application DOM.
 export async function renderDesignImages(html: string, format: ImageFormat, options: ImageExportOptions = {}): Promise<DesignImage[]> {
   if (format !== 'png' && format !== 'jpg') throw new Error('Formato de imagen inválido.')
   if (options.size && !validSocialSize(options.size)) throw new Error('Medidas de exportación inválidas.')
+  if (options.piece !== undefined && (!Number.isInteger(options.piece) || options.piece < 0 || options.piece >= 20)) throw new Error('Placa inválida.')
   const response = await fetch('/api/image-renderer')
   if (!response.ok) throw new Error('No se pudo cargar el exportador de imágenes.')
   const renderer = await response.text()
@@ -22,7 +23,7 @@ export async function renderDesignImages(html: string, format: ImageFormat, opti
   const token = crypto.randomUUID(), mime = format === 'jpg' ? 'image/jpeg' : 'image/png'
   const script = `${renderer.replace(/<\/script/gi, '<\\/script')}
 ;addEventListener('load',async()=>{
-  const token=${JSON.stringify(token)}, mime=${JSON.stringify(mime)}, target=${JSON.stringify(options.size ?? null)}, selectedFormat=${JSON.stringify(options.formatId ?? null)};
+  const token=${JSON.stringify(token)}, mime=${JSON.stringify(mime)}, target=${JSON.stringify(options.size ?? null)}, selectedFormat=${JSON.stringify(options.formatId ?? null)}, selectedPiece=${JSON.stringify(options.piece ?? null)};
   const getSafe=${socialSafeArea.toString()}, placeSafe=${safeContentPlacement.toString()};
   try {
     const frozen=document.createElement('style');frozen.textContent='*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';document.head.append(frozen);
@@ -30,8 +31,9 @@ export async function renderDesignImages(html: string, format: ImageFormat, opti
     await Promise.all(Array.from(document.images,image=>image.decode().catch(()=>{})));
     await new Promise(resolve=>setTimeout(resolve,100));
     const marked=Array.from(document.querySelectorAll('[data-social-piece]')).filter(el=>!el.parentElement?.closest('[data-social-piece]')&&el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0);
-    const pieces=marked.length?marked:[document.body];
+    let pieces=marked.length?marked:[document.body];
     if(pieces.length>20)throw new Error('Exportá hasta 20 placas por descarga.');
+    if(selectedPiece!==null){if(selectedPiece>=pieces.length)throw new Error('La placa ya no está disponible.');pieces=[pieces[selectedPiece]];}
     const images=[];let pixels=0;
     for(const root of pieces){
       const isPiece=root.hasAttribute('data-social-piece');

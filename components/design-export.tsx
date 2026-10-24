@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useImperativeHandle, useRef, useState, type Ref } from 'react'
 import { AuthRouteError, fetchUi } from './auth-ui'
 import { IconCheck, IconCopy, IconShare } from './geist-icons'
 import { Button } from './ui/button'
@@ -24,18 +24,22 @@ function designFileName(title: string | null | undefined): string {
 
 type Notice = { tone: 'status' | 'error'; text: string }
 
+export interface DesignExportHandle { downloadPlates: (format: 'png' | 'jpg', piece?: number) => Promise<void> }
+
 export const DROP_URL = 'https://vercel.com/drop'
 
 // Copies, downloads or hands to Vercel Drop the design the preview shows: a past
 // version when one is pinned (`revision`), else the latest (`latest`, which also keys
 // the cached HTML).
 export default function DesignExport({
+  ref,
   sessionId,
   revision,
   latest,
   title,
   onNotice,
 }: {
+  ref?: Ref<DesignExportHandle>
   sessionId: string
   revision: number | null
   latest: number
@@ -110,7 +114,7 @@ export default function DesignExport({
     }
   }
 
-  async function downloadImage(format: 'png' | 'jpg') {
+  async function downloadImage(format: 'png' | 'jpg', piece?: number, native = false) {
     if (renderingRef.current) return
     renderingRef.current = true
     setRendering(true)
@@ -118,9 +122,10 @@ export default function DesignExport({
     onNotice({ tone: 'status', text: `Rendering ${format.toUpperCase()}…` })
     try {
       const [html, { renderDesignImages }] = await Promise.all([load(), import('./design-image')])
-      const images = await renderDesignImages(html, format, exportFormat ? { size: { width: exportFormat.width, height: exportFormat.height }, formatId: exportFormat.id } : {})
+      const selected = native ? null : exportFormat
+      const images = await renderDesignImages(html, format, { ...(selected ? { size: { width: selected.width, height: selected.height }, formatId: selected.id } : {}), ...(piece === undefined ? {} : { piece }) })
       const slug = designFileName(title).replace(/\.html$/, '')
-      const suffix = exportFormat ? `-${exportFormat.id}-${exportFormat.width}x${exportFormat.height}` : ''
+      const suffix = selected ? `-${selected.id}-${selected.width}x${selected.height}` : ''
       let blob: Blob, fileName: string
       if (images.length > 1) {
         const { imageZip } = await import('../lib/image-zip')
@@ -128,7 +133,7 @@ export default function DesignExport({
         fileName = `${slug}${suffix}-${format}.zip`
       } else {
         blob = images[0].blob
-        fileName = `${slug}${suffix}.${format}`
+        fileName = `${slug}${suffix}${piece === undefined ? '' : `-placa-${String(piece + 1).padStart(2, '0')}`}.${format}`
       }
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -147,6 +152,8 @@ export default function DesignExport({
       setRendering(false)
     }
   }
+
+  useImperativeHandle(ref, () => ({ downloadPlates: (format, piece) => downloadImage(format, piece, true) }))
 
   // Vercel Drop deploys files dropped onto its page and takes none from another site,
   // so this hands over the file: Drop opens first, inside the click, where a popup is

@@ -37,7 +37,7 @@ const GbEmptyPreview = dynamic(() => import('./gb-workbench').then(module => mod
 
 // Rarely opened and pulls in Sheet and Tabs; loaded on first open, not with the page.
 const DebugPanel = dynamic(() => import('./debug-panel'), { ssr: false })
-import DesignExport from './design-export'
+import DesignExport, { type DesignExportHandle } from './design-export'
 import { Skeleton } from './ui/skeleton'
 import PreviewPane, { type PreviewSource } from './preview-pane'
 import Sidebar from './sidebar'
@@ -320,6 +320,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   privateAccess.current = canAccessSession
   const [signInOpen, setSignInOpen] = useState(false)
   const [draftError, setDraftError] = useState('')
+  const exportRef = useRef<DesignExportHandle>(null)
   const composerRef = useRef<ComposerHandle>(null)
   const restoredDraft = useRef(false)
   // True while the sign-in dialog was opened by a send, so the draft goes out after sign-in.
@@ -1925,6 +1926,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
 
               {region((view) => !authBlocked && !view.missing && view.snapshot.transcript.view.artifactRevision > 0 && (
                 <DesignExport
+                  ref={exportRef}
                   sessionId={view.sessionId}
                   revision={viewing}
                   latest={view.snapshot.transcript.view.artifactRevision}
@@ -2072,6 +2074,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
             </div>
             {region((view) => (
               <PreviewPane
+                onDownload={(format, piece) => exportRef.current?.downloadPlates(format, piece)}
                 introContent={gb ? <GbEmptyPreview campaignId={gbSelection.campaignId} /> : undefined}
                 source={{ kind: 'design', sessionId: view.sessionId, revision: view.snapshot.transcript.view.artifactRevision }}
                 viewing={viewing}

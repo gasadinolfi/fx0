@@ -13,6 +13,7 @@ export default function PreviewPane({
   intro,
   introContent,
   onClose,
+  onDownload,
 }: {
   source: PreviewSource
   // A past revision opened from the transcript's "View" link, never the latest; null is the latest.
@@ -22,8 +23,12 @@ export default function PreviewPane({
   // Only an empty chat explains fx0; a chat waiting on its first design stays blank.
   intro: boolean
   introContent?: ReactNode
+  onDownload?: (format: 'png' | 'jpg', piece?: number) => void | Promise<void>
   onClose: () => void
 }) {
+  const downloadRef = useRef(onDownload)
+  downloadRef.current = onDownload
+  const downloading = useRef(false)
   const session = encodeURIComponent(source.sessionId)
   const previewUrl = source.revision > 0
     ? viewing != null
@@ -73,9 +78,22 @@ export default function PreviewPane({
   const frames = useRef<(HTMLIFrameElement | null)[]>([null, null])
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin || event.data?.type !== 'fx0-artifact-painted') return
+      if (event.origin !== window.location.origin) return
       const index = frames.current.findIndex((frame) => frame?.contentWindow === event.source)
-      if (index >= 0) bringToFront(index)
+      if (index < 0 || slotUrls.current[index] !== wanted.current) return
+      if (event.data?.type === 'fx0-artifact-painted') bringToFront(index)
+      if (event.data?.type !== 'fx0-social-download' || downloading.current || !downloadRef.current) return
+      const { format, piece } = event.data
+      if (format !== 'png' && format !== 'jpg') return
+      if (piece != null && (!Number.isInteger(piece) || piece < 0 || piece >= 20)) return
+      downloading.current = true
+      const target = frames.current[index]?.contentWindow
+      const state = (busy: boolean) => target?.postMessage({ type: 'fx0-social-download-state', busy }, window.location.origin)
+      state(true)
+      void Promise.resolve().then(() => downloadRef.current?.(format, piece ?? undefined)).finally(() => {
+        downloading.current = false
+        state(false)
+      }).catch(() => {})
     }
     window.addEventListener('message', onMessage)
     return () => {
