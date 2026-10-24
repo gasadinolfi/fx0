@@ -1194,7 +1194,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
       setInteractionNotice({ tone: 'error', text: 'Esperá a que cargue el contexto de GB o recargá la mesa.' })
       return false
     }
-    if (gb && gbSocialFormat && !validSocialSize(gbSocialFormat)) {
+    if (gb && gbSocialFormat && !validSocialSize(gbSocialFormat) && !value.includes('Formato elegido:')) {
       setInteractionNotice({ tone: 'error', text: 'Elegí medidas entre 64 y 4096 px, hasta 16 megapíxeles.' })
       return false
     }

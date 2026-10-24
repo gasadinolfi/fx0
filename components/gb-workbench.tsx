@@ -9,6 +9,7 @@ import { Skeleton } from './ui/skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from './ui/sheet'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import Markdown from './markdown'
+import { GB_PALETTE, GB_PALETTE_POLICY, gbGuideDownload } from '../lib/gb-palette'
 import SocialFormatPicker from './social-format-picker'
 import { SOCIAL_FORMATS, socialPrompt, validSocialSize, type SocialFormat } from '../lib/social-formats'
 
@@ -23,6 +24,8 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
   const [campaignId, setCampaignId] = useState('entender')
   const [socialFormat, setSocialFormat] = useState<SocialFormat>(SOCIAL_FORMATS[0])
   useEffect(() => { if (enabled) onFormat?.(socialFormat) }, [enabled, socialFormat, onFormat])
+  const lastAutoFormat = useRef<string | null>(null)
+  useEffect(() => { lastAutoFormat.current = null }, [sessionId])
   const [loadedFor, setLoadedFor] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('guide')
@@ -70,6 +73,20 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
       return next
     } catch (error) { setError((error as Error).message); return null } finally { setSaving(false) }
   }
+  function adaptFormat(format: SocialFormat, automatic = false) {
+    if (!hasDesign || busy || !ready || !validSocialSize(format)) return
+    const key = `${sessionId}:${format.id}:${format.width}:${format.height}`
+    if (automatic && lastAutoFormat.current === key) return
+    const accepted = onSend(socialPrompt('Adaptá automáticamente la pieza visual actual al formato seleccionado. Aplicá la paleta coral, celeste, blanco y azul oscuro del design.md original de GB.', format, true))
+    if (accepted !== false) { lastAutoFormat.current = key; setError('') }
+    else setError('No se pudo iniciar la adaptación. Volvé a intentarlo cuando termine la operación actual.')
+  }
+  function changeFormat(format: SocialFormat | null) {
+    if (!format || busy || !ready) return
+    const changed = format.id !== socialFormat.id || format.width !== socialFormat.width || format.height !== socialFormat.height
+    setSocialFormat(format)
+    if (changed && format.id !== 'custom') adaptFormat(format, true)
+  }
   function choose(id: string) {
     if (busy || saving) return
     const url = new URL(window.location.href); url.searchParams.set('c', id); window.history.replaceState(null, '', url)
@@ -99,7 +116,7 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
   }
   function downloadGuide() {
     if (!guide) return
-    const url = URL.createObjectURL(new Blob([guide.text], { type: 'text/markdown;charset=utf-8' }))
+    const url = URL.createObjectURL(new Blob([gbGuideDownload(guide.text)], { type: 'text/markdown;charset=utf-8' }))
     const a = document.createElement('a'); a.href = url; a.download = 'DESIGN.md'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
   async function createCampaign(form: FormData) {
@@ -121,11 +138,12 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
         </select>
         <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => panel('campaigns')}>Nueva campaña</Button>
       </div>
-      <div className="mt-3"><SocialFormatPicker value={socialFormat} onChange={value => { if (value) setSocialFormat(value) }} disabled={!ready || busy} /></div>
+      <div className="mt-3"><SocialFormatPicker value={socialFormat} onChange={changeFormat} onCommit={value => { if (value) adaptFormat(value, true) }} disabled={!ready || busy} /></div>
+      {hasDesign && <p className="mt-2 text-xs text-muted-foreground">Cambiar red o formato adapta automáticamente la pieza. Las medidas personalizadas se aplican al terminar de editarlas.</p>}
       {selected && <>
         {empty ? <div className="gb-intro py-7"><p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">{selected.page ? `Propuesta del manual · Página ${selected.page}` : 'Campaña propia'}</p><h2 className="max-w-lg text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{selected.title}</h2><p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground">{selected.message} {selected.objective}</p></div> : <p className="mt-3 text-xs text-muted-foreground">{selected.message}</p>}
         <div className="mt-3 grid grid-cols-2 gap-2">{GB_ACTIONS.map((action, i) => <Button key={action.label} variant={i === 0 ? 'default' : 'outline'} disabled={!ready || busy || !validSocialSize(socialFormat)} className="h-auto min-h-10 justify-start whitespace-normal text-left text-xs sm:text-sm" onClick={() => onSend(i < 2 ? socialPrompt(action.prompt, socialFormat) : action.prompt)}>{action.label}<span className="ml-auto" aria-hidden="true">↗</span></Button>)}</div>
-        {hasDesign && <Button variant="outline" size="sm" className="mt-3" disabled={!ready || busy || !validSocialSize(socialFormat)} onClick={() => onSend(socialPrompt("Adaptá la pieza visual actual al formato seleccionado.", socialFormat, true))}>Adaptar pieza a este formato</Button>}
+        {hasDesign && <Button variant="outline" size="sm" className="mt-3" disabled={!ready || busy || !validSocialSize(socialFormat)} onClick={() => adaptFormat(socialFormat)}>Adaptar pieza a este formato</Button>}
         {selected.guideId !== state.activeGuideId && <div className="mt-3 flex flex-wrap items-center gap-2"><p className="text-xs text-muted-foreground">Esta campaña conserva una guía anterior.</p><Button variant="ghost" size="sm" disabled={saving || busy} onClick={() => void mutate({ action: 'adopt', campaignId })}>Adoptar guía vigente</Button></div>}
       </>}
     </>}
@@ -139,6 +157,7 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
           <TabsContent value="guide" className="flex flex-col gap-4">
             <p className="text-xs text-muted-foreground">Versión de la campaña: {state.guides.findIndex(g => g.id === guide?.id) + 1}. Las nuevas campañas usan la guía vigente.</p>
             <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={downloadGuide}>Descargar DESIGN.md</Button><Button variant="outline" size="sm" onClick={() => { setEdit(state.proposal?.text ?? activeGuide!.text); setEditing(true); setTab('review') }}>Proponer cambios</Button></div>
+            <section className="border border-border p-3" aria-label="Paleta vigente de GB"><p className="mb-2 text-sm font-semibold">Paleta vigente de las placas</p><p className="text-xs leading-5 text-muted-foreground">{GB_PALETTE_POLICY}</p></section>
             <Markdown>{guide?.text ?? ''}</Markdown>
             <details className="border-t border-border pt-4"><summary className="cursor-pointer text-sm">Versiones anteriores</summary><div className="mt-3 flex flex-col gap-3">{state.guides.map((g, i) => <div key={g.id} className="flex items-center justify-between gap-3"><span className="text-sm">Versión {i + 1} · {g.note}{g.id === state.activeGuideId ? ' · Vigente' : ''}</span><Button variant="outline" size="sm" disabled={saving || busy || g.id === state.activeGuideId || !!state.proposal} onClick={() => void mutate({ action: 'activate', guideId: g.id })}>Recuperar</Button></div>)}</div></details>
           </TabsContent>
@@ -180,11 +199,11 @@ function GuideComparison({ before, after }: { before: string; after: string }) {
 export function GbEmptyPreview({ campaignId }: { campaignId: string | null }) {
   const title = GB_SEED_CAMPAIGNS.find(c => c.id === campaignId)?.title ?? 'Tu próxima idea'
   return <div className="flex flex-col gap-5" aria-label="Referencia visual de GB">
-    <div className="gb-reference-poster relative flex aspect-[4/5] flex-col justify-between overflow-hidden border border-border p-7">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Bengochea / Comunicación</p>
+    <div style={{ backgroundColor: GB_PALETTE.background, color: GB_PALETTE.text }} className="gb-reference-poster relative flex aspect-[4/5] flex-col justify-between overflow-hidden border border-border p-7">
+      <p className="text-[10px] uppercase tracking-[0.2em]">Bengochea / Comunicación</p>
       <h2 className="relative max-w-xs text-3xl font-semibold leading-tight tracking-tight">{title}</h2>
-      <svg viewBox="0 0 300 190" className="w-full text-primary" fill="none" stroke="currentColor" strokeWidth="0.7" aria-hidden="true">{[70,110,150,190,230].map((x,i)=><g key={x} opacity={1-i*.12}><circle cx={x} cy="95" r="56" /><ellipse cx={x} cy="95" rx="22" ry="56" /><ellipse cx={x} cy="95" rx="56" ry="20" /></g>)}</svg>
-      <p className="border-t border-border pt-3 text-xs tracking-wide">BENGOCHEA · INVERSIONES</p>
+      <svg viewBox="0 0 300 190" className="w-full" style={{ color: GB_PALETTE.primary }} fill="none" stroke="currentColor" strokeWidth="0.7" aria-hidden="true">{[70,110,150,190,230].map((x,i)=><g key={x} opacity={1-i*.12}><circle cx={x} cy="95" r="56" /><ellipse cx={x} cy="95" rx="22" ry="56" /><ellipse cx={x} cy="95" rx="56" ry="20" /></g>)}</svg>
+      <p style={{ borderColor: GB_PALETTE.accent }} className="border-t pt-3 text-xs tracking-wide">BENGOCHEA · INVERSIONES</p>
     </div>
     <p className="text-xs leading-5 text-muted-foreground">Referencia de estilo. Elegí una acción o contá tu idea; la pieza que creemos aparecerá acá.</p>
   </div>

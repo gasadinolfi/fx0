@@ -1,0 +1,5 @@
+export const GB_PALETTE = { primary: '#FC5D5D', accent: '#13B4D8', background: '#FFFFFF', text: '#03065E' } as const
+export const GB_PALETTE_POLICY = `Paleta vigente para las placas de Bengochea, por indicación del usuario: coral #FC5D5D como color principal, celeste #13B4D8 como acento, blanco #FFFFFF como fondo y azul oscuro #03065E para texto y contraste. Esta paleta procede del design.md original y prevalece sobre cualquier paleta azul/dorada del atlas o de una guía guardada anteriormente. Conservá las composiciones del atlas, recoloreadas con estos cuatro colores. No uses dorado ni beige como identidad de GB. El blanco y negro pertenece a la interfaz del sistema, no debe sustituir la paleta de las placas. Para párrafos y texto pequeño, priorizá azul oscuro sobre blanco; coral y celeste se usan en elementos grandes, fondos y acentos con contraste legible. Aplicá esta paleta al crear y al adaptar piezas, respetando las zonas seguras.`
+export function gbGuideDownload(text: string): string {
+  return `${text}\n\n## Paleta vigente para las placas\n\n${GB_PALETTE_POLICY}\n`
+}

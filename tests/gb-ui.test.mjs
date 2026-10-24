@@ -20,7 +20,7 @@ const hooks=registerHooks({resolve(s,c,next){
   return next(s,{...c,parentURL:projectUrl})
 }})
 after(()=>hooks.deregister())
-const {default:Workbench}=await import(pathToFileURL(join(output,'components/gb-workbench.js')).href)
+const {default:Workbench,GbEmptyPreview}=await import(pathToFileURL(join(output,'components/gb-workbench.js')).href)
 const {socialPrompt,SOCIAL_FORMATS}=await import(pathToFileURL(join(output,'lib/social-formats.js')).href)
 const {GB_SEED_CAMPAIGNS,GB_ACTIONS}=await import(pathToFileURL(join(output,'lib/gb-model.js')).href)
 const tick=()=>new Promise(r=>setImmediate(r))
@@ -147,9 +147,48 @@ test('GB adapts the existing design to the chosen network without requesting a c
   assert.ok(picker)
   picker.props.onChange(SOCIAL_FORMATS.find(f=>f.id==='youtube-thumbnail'))
   tree=s.view.render(s.props)
-  button(tree,'Adaptar pieza a este formato').props.onClick()
+  assert.equal(s.sent.length,1,'changing the preset starts adaptation without another click')
   assert.match(s.sent.at(-1),/1280 × 720/)
   assert.match(s.sent.at(-1),/Recomponé todas las placas/)
   assert.match(s.sent.at(-1),/data-social-piece/)
   assert.match(s.sent.at(-1),/No lo resuelvas recortando/)
+})
+
+test('changing format before creating a design does not start a generation',async t=>{
+  const s=setup(t)
+  s.view.render(s.props);s.view.flush();await tick()
+  let tree=s.view.render(s.props)
+  find(tree,n=>typeof n.type==='function'&&n.type.name==='SocialFormatPicker').props.onChange(SOCIAL_FORMATS.find(f=>f.id==='pinterest-pin'))
+  tree=s.view.render(s.props)
+  assert.equal(s.sent.length,0)
+  const action=find(tree,n=>n.props?.onClick&&text(n).startsWith('Crear publicación'))
+  action.props.onClick()
+  assert.match(s.sent[0],/1000 × 1500/)
+})
+test('custom sizes adapt only on commit, deduplicate blur events and reject invalid measures',async t=>{
+  const s=setup(t)
+  s.props.hasDesign=true
+  s.view.render(s.props);s.view.flush();await tick()
+  const picker=()=>find(s.view.render(s.props),n=>typeof n.type==='function'&&n.type.name==='SocialFormatPicker')
+  const custom={id:'custom',network:'Personalizado',label:'Propio',width:900,height:1600}
+  picker().props.onChange(custom)
+  assert.equal(s.sent.length,0)
+  picker().props.onCommit(custom)
+  picker().props.onCommit(custom)
+  assert.equal(s.sent.length,1)
+  assert.match(s.sent[0],/900 × 1600/)
+  picker().props.onCommit({...custom,width:0})
+  assert.equal(s.sent.length,1)
+  s.props.busy=true
+  picker().props.onChange(SOCIAL_FORMATS[1])
+  assert.equal(s.sent.length,1)
+})
+
+
+test('the GB sample uses original brand colors inside the artwork',()=>{
+  const tree=GbEmptyPreview({campaignId:'entender'})
+  const poster=find(tree,n=>n.props?.className?.includes('gb-reference-poster'))
+  assert.equal(poster.props.style.backgroundColor,'#FFFFFF')
+  assert.equal(poster.props.style.color,'#03065E')
+  assert.equal(find(tree,n=>n.type==='svg').props.style.color,'#FC5D5D')
 })

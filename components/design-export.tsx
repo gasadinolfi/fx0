@@ -209,7 +209,7 @@ export default function DesignExport({
           </svg>
           download HTML
         </button>
-        <div className="flex flex-col gap-2 border-y border-border px-2.5 py-3 my-1"><SocialFormatPicker value={exportFormat} onChange={setExportFormat} disabled={rendering} original /><p className="text-xs leading-4 text-muted-foreground">Las placas del carrusel se guardan por separado en un ZIP. Al elegir una red se protege su zona segura. Para recomponer el diseño, usá «Adaptar pieza» en la mesa.</p></div>
+        <div className="flex flex-col gap-2 border-y border-border px-2.5 py-3 my-1"><SocialFormatPicker label="Tamaño de descarga" value={exportFormat} onChange={setExportFormat} disabled={rendering} original /><p className="text-xs leading-4 text-muted-foreground">Las placas del carrusel se guardan por separado en un ZIP. Al elegir una red se protege su zona segura. Para recomponer el diseño, usá «Adaptar pieza» en la mesa.</p></div>
         {(['png', 'jpg'] as const).map((format) => (
           <Button
             key={format}

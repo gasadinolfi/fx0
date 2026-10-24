@@ -25,11 +25,11 @@ const store = await import('../lib/gb-store.ts')
 const { validateGbGuide, GB_ACTIONS, gbContext } = await import('../lib/gb-model.ts')
 const { extractGbUpload, htmlReferenceText } = await import('../lib/gb-upload.ts')
 
-test('GB starts with all six campaigns and the atlas visual system, independently per account', async () => {
+test('GB starts with all six campaigns and the original design.md palette, independently per account', async () => {
   const a = await store.readGbWorkspace('a'), b = await store.readGbWorkspace('b')
   assert.equal(a.campaigns.length, 6)
   assert.equal(a.campaigns[0].title, 'Invertir empieza por entender')
-  assert.match(a.guides[0].text, /#102247/)
+  assert.match(a.guides[0].text, /#FC5D5D/)
   assert.match(a.guides[0].text, /no un manual oficial/)
   a.campaigns[0].title = 'mutated local copy'
   assert.notEqual((await store.readGbWorkspace('a')).campaigns[0].title, a.campaigns[0].title)
@@ -123,4 +123,18 @@ test('deleting a chat removes its campaign link without deleting the guide or ot
   assert.equal(state.campaigns[0].sessionIds.length,0)
   assert.equal(state.guides.length,1)
   assert.equal(state.campaigns.length,6)
+})
+
+
+test('the current original palette overrides older atlas references without rewriting saved guides', async () => {
+  const { GB_PALETTE, GB_PALETTE_POLICY, gbGuideDownload } = await import('../lib/gb-palette.ts')
+  assert.deepEqual(GB_PALETTE,{primary:'#FC5D5D',accent:'#13B4D8',background:'#FFFFFF',text:'#03065E'})
+  const state=await store.readGbWorkspace('palette-owner')
+  const oldGuide={...state.guides[0],text:'Older atlas palette #102247 and #F0D27B'}
+  const context=gbContext(oldGuide,state.campaigns[0])
+  assert.ok(context.indexOf(GB_PALETTE_POLICY)>context.indexOf('</gb_guide>'))
+  assert.match(context,/prevalece sobre cualquier paleta/)
+  assert.equal(oldGuide.text,'Older atlas palette #102247 and #F0D27B')
+  assert.match(gbGuideDownload(oldGuide.text),/Paleta vigente para las placas/)
+  assert.match(gbGuideDownload(oldGuide.text),/#FC5D5D/)
 })

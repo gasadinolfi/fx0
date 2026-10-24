@@ -4,26 +4,23 @@ Versión inicial de trabajo · 24 de octubre de 2026.
 Esta guía sintetiza tres insumos entregados por el usuario. Es una dirección de trabajo, no un manual oficial de identidad aprobado por Bengochea.
 
 ## Fuentes y decisiones
-- Atlas HTML `gb_social_atlas_v7 (1).html`: referencia prioritaria de apariencia; 72 piezas, doce colecciones, seis estructuras y cuatro paletas. El título interno dice V4: conservar esta discrepancia de nombre, sin atribuir una versión oficial.
+- Atlas HTML `gb_social_atlas_v7 (1).html`: referencia de composición y recursos gráficos; 72 piezas, doce colecciones, seis estructuras y cuatro paletas. El título interno dice V4: conservar esta discrepancia de nombre, sin atribuir una versión oficial.
 - PDF `Bengochea-manual-marketing-comunicacion.pdf`, 27 páginas, 22/10/2026: base de voz, mensajes y seis campañas propuestas. D001–D103 son referencias al dossier original, no documentos adjuntos verificados aquí.
-- `design.md` original: aporta criterio editorial, accesibilidad y claridad. Su paleta coral/celeste y Montserrat/Italiana quedan como antecedente; para esta mesa el usuario eligió el atlas.
+- `design.md` original: aporta criterio editorial, accesibilidad y claridad. Su paleta coral/celeste/blanco/azul oscuro es la referencia vigente para las placas por indicación del usuario. La tipografía y las composiciones conservan la dirección del atlas; esta corrección aplica a los colores.
 - Las fotografías, marcas tipográficas y ejemplos del atlas no prueban permisos ni condiciones comerciales vigentes. No reutilizar automáticamente sus promesas de mínimos, gratuidad o servicios.
 
 ## Identidad y lectores
 Firma uruguaya de asesoramiento e intermediación en inversiones según la base documental. Comunicar escucha, comprensión, acceso, trayectoria, seguimiento y transparencia. La personalidad propuesta es serena, clara, profesional y cercana. Públicos del PDF son hipótesis por necesidades: primeras preguntas, objetivos, diversificación, clientes actuales e instituciones; no segmentos comerciales verificados.
 
-## Paleta del atlas
+## Paleta vigente del design.md original
 | Rol | Valor |
 | --- | --- |
-| Azul principal | #102247 |
-| Azul profundo | #091932 |
-| Texto claro | #F9F7F0 |
-| Texto secundario sobre azul | #C7D3E7 |
-| Acento dorado | #F0D27B |
-| Papel | #F5F3EB |
-| Tinta sobre papel | #102247 |
+| Color principal · coral | #FC5D5D |
+| Acento · celeste | #13B4D8 |
+| Fondo · blanco | #FFFFFF |
+| Texto y contraste · azul oscuro | #03065E |
 
-Variantes observadas: nocturna #0A1832 / #071127 con #DAC99E; papel #F5F3EB / #E7E7E1 con #D8BE74; azul medio #264774 / #142C50 con #F1D47B. El dorado es un acento editorial, no una promesa de lujo o riqueza. No usar dorado para párrafos sobre papel. Conservar contraste legible y no comunicar solo con color.
+Aplicar estos cuatro colores a las composiciones del atlas. La paleta azul/dorada del HTML es un antecedente visual y queda reemplazada para las placas. No usar dorado o beige como identidad de GB. Reservar azul oscuro sobre blanco para párrafos y texto pequeño; coral y celeste se usan en acentos, geometría y fondos con contraste legible. La interfaz del sistema conserva su blanco y negro: esa apariencia no debe trasladarse a las piezas de marca.
 
 ## Tipografía
 El render final del atlas usa Inter, Roboto, Arial, sans-serif; títulos de peso aproximado 760 y espaciado ligeramente negativo; cuerpo aproximado 460. Usar Inter cuando esté disponible y fallbacks declarados. No presentar esas fuentes como oficiales. Títulos en sans serif fuerte, sin Italiana en esta dirección.
@@ -31,7 +28,7 @@ El monograma GB está simulado con Georgia/Times; NO es un logo original verific
 
 ## Composición de piezas
 Base social: 1080 × 1350 px, relación 4:5. Margen lateral observado de 72–78 px. Encabezado editorial pequeño, título de dos líneas, un motivo dominante, bajada breve y pie con regla fina y firma. Los títulos observados rondan 77–100 px; cuerpos 22–26 px; etiquetas 17–21 px. Son referencias del atlas, ajustables al contenido sin recortar palabras.
-Alternar seis familias: disco central grande; semicírculo superior; progresión de esferas lineales; curvas elípticas horizontales; papel con grilla y diagrama; fotografía superior con panel azul inferior y línea dorada. No convertir toda pieza en una tarjeta o repetir una misma estructura seis veces. En carruseles mantener unidad, numeración y una idea por placa.
+Alternar seis familias: disco central grande; semicírculo superior; progresión de esferas lineales; curvas elípticas horizontales; papel con grilla y diagrama; fotografía superior con panel azul oscuro inferior y línea coral o celeste. No convertir toda pieza en una tarjeta o repetir una misma estructura seis veces. En carruseles mantener unidad, numeración y una idea por placa.
 Los diagramas son conceptuales. No dar apariencia de gráfico financiero medido a una geometría decorativa. Evitar cifras sin fuente y gráficos sin ejes, fecha o unidades.
 
 ## Fotografía y recursos
@@ -61,7 +58,7 @@ Son propuestas del manual, no campañas publicadas, aprobadas o actualmente acti
 Titular: «Invertir empieza por entender».
 Bajada: «Podés empezar por tus objetivos, tus plazos y tus preguntas».
 Cierre: «Tus preguntas son un buen punto de partida. Conversemos».
-Crear el carrusel con seis placas y variaciones de geometría azul/dorado/papel, sin inventar información comercial. El copy acompaña al diseño; el guion de video queda en el chat.
+Crear el carrusel con seis placas y variaciones de geometría coral/celeste/blanco/azul oscuro, sin inventar información comercial. El copy acompaña al diseño; el guion de video queda en el chat.
 
 ## Canales, producción y revisión
 Redes para preguntas y educación; LinkedIn para experiencia y equipo; email para contactos habilitados; páginas para ampliar y centralizar información. Son funciones propuestas, no cuentas confirmadas. El calendario del PDF es una secuencia relativa de 30 días, no fechas de publicación acordadas.

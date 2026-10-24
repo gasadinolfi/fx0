@@ -202,7 +202,7 @@ Paid model requests carry the sender's OAuth token only to AI Gateway. Between r
 
 ## Bengochea workbench
 
-`/gb` is a private, account-owned workbench. It starts with the six campaign proposals from the supplied marketing PDF, uses the atlas visual direction, and retains the existing chat, preview, revision history and exports. The initial guide lives in `lib/gb/DESIGN.md`; source originals ship as server-only references, outside `public/`.
+`/gb` is a private, account-owned workbench. It starts with the six campaign proposals from the supplied marketing PDF, uses the atlas composition with the original design.md palette (coral #FC5D5D, cyan #13B4D8, white #FFFFFF and dark blue #03065E), and retains the existing chat, preview, revision history and exports. The initial guide lives in `lib/gb/DESIGN.md`; source originals ship as server-only references, outside `public/`.
 
 It requires the existing authentication/Gateway configuration, `DATABASE_URL`, and `KV_REST_API_URL` / `KV_REST_API_TOKEN`. No additional database migration is needed: workspace versions, sources and campaign bindings use account-scoped Redis keys. Uploads prepare an editable proposal; acceptance creates a new guide version. Existing campaigns adopt it only explicitly. HTML references are extracted as text or downloaded as sandboxed attachments. PDF uploads require extractable text (no OCR); images are PNG/JPEG/WebP, up to 700 KB.
 
@@ -210,7 +210,7 @@ Run `npm run test:gb` for workspace, upload, UI and route-security tests. Video 
 
 ### Social image formats
 
-The GB workbench includes working-canvas presets for Instagram, Facebook, LinkedIn, X, Threads, Bluesky, TikTok, Pinterest, YouTube and WhatsApp, plus custom dimensions (64–4096 px, up to 16 megapixels). Select a format before creating a piece or use **Adaptar pieza a este formato** to recompose an existing design through the chat. Video placements produce static covers or scripts, not video files. The system UI keeps its monochrome theme.
+The GB workbench includes working-canvas presets for Instagram, Facebook, LinkedIn, X, Threads, Bluesky, TikTok, Pinterest, YouTube and WhatsApp, plus custom dimensions (64–4096 px, up to 16 megapixels). Select a format before creating a piece. When a design is open, changing the preset automatically starts recomposition through the chat; custom dimensions apply when focus leaves the size fields. **Adaptar pieza a este formato** remains available for retries. Video placements produce static covers or scripts, not video files. The system UI keeps its monochrome theme.
 
 The download menu supports native dimensions or a selected output size in PNG/JPG. Tagged carousel slides (`data-social-piece`, `data-social-width`, `data-social-height`) export separately in one ZIP, up to 20 slides / 64 megapixels per download. Legacy untagged designs export as one image; ask the chat to adapt the carousel to enable individual slide exports. Export resizing fits the full content without cropping; recomposition uses the workbench action.
 
@@ -221,3 +221,5 @@ Working sizes are editable presets, not guarantees of upload acceptance or platf
 Generation and adaptation prompts reserve a conservative safe rectangle for all informative text, logos, signatures, CTAs, products and key faces. Full-bleed backgrounds and decoration remain allowed. The format picker includes a safe-area diagram. These are internal layout policies, not official platform guarantees: TikTok and YouTube document that overlays vary by placement, caption and device ([TikTok](https://ads.tiktok.com/resources/help/article/tiktok-auction-in-feed-ads?lang=en), [Google Ads](https://support.google.com/google-ads/answer/13547298?hl=en)). Check the actual platform preview before publishing.
 
 For social exports, the renderer measures visible text and critical objects, then translates/scales the composition so that those bounds fit inside the target safe area. Informative images are critical by default; only explicit `data-social-decoration` images are excluded. Unknown raster content falls back to fitting the complete piece. Out-of-canvas information blocks the export instead of being silently clipped. New designs use `data-social-safe`, `data-social-format`, and `data-social-critical`; guide overlays are excluded from image files. Generic website screenshots in Original mode keep their existing behavior.
+
+The current GB palette is also supplied after historical guide references in the agent context, so older saved atlas palettes do not override this user-requested correction. Saved guide history is preserved; guide downloads append the current palette policy. Only the sample/artwork uses brand colors; the system interface stays monochrome.

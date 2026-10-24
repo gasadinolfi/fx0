@@ -136,13 +136,13 @@ function browser(t, routes = {}) {
   return { storage, requests, timers, cleanups }
 }
 
-function mount(t, ui, data = guestBoot, { booted = true } = {}) {
+function mount(t, ui, data = guestBoot, { booted = true, gb = false } = {}) {
   const chat = renderHooks(ChatApp)
   const composer = renderHooks(Composer)
   const account = { user: data.user, team: data.team, freePrompts: data.freePrompts }
   const sidebar = { sessions: data.sessions, nextCursor: null }
   const bootData = { sessionId: data.user ? data.sessionId : 'draft', snapshot: { transcript: compactTranscript(data.events, data.view), summary: data.sessions.find((session) => session.id === data.sessionId) ?? null }, now: data.now, missing: data.missing }
-  const initial = { account: Promise.resolve(account), sidebar: Promise.resolve(sidebar), boot: Promise.resolve(bootData), defaultModel: data.defaultModel ?? 'default-model' }
+  const initial = { gb, account: Promise.resolve(account), sidebar: Promise.resolve(sidebar), boot: Promise.resolve(bootData), defaultModel: data.defaultModel ?? 'default-model' }
   let tree = chat.render(initial)
   // React hands the streamed data to ChatApp through BootLoader's onBoot.
   const adopt = (promise, value) => find(tree, (node) => node.props?.boot === promise && typeof node.props?.onBoot === 'function').props.onBoot(value)
@@ -169,6 +169,23 @@ function mount(t, ui, data = guestBoot, { booted = true } = {}) {
 
 const trialUser = { id: 'guest:new', name: 'You', email: null, picture: null, guest: true }
 const trialModel = 'anthropic/claude-opus-5.5-fast'
+
+test('GB auto adaptation can replace an invalid custom selection with a valid preset in one change', async t => {
+  t.mock.method(console,'info',()=>{})
+  const emptyStream=()=>new Response(new ReadableStream({start(controller){controller.close()}}))
+  const ui=browser(t,{'/api/events?session=saved&after=0':emptyStream,'/api/prompt?session=saved':emptyStream})
+  const app=mount(t,ui,{...guestBoot,user:{id:'owner',name:'Owner'},sessionId:'saved'},{gb:true})
+  const workbench=()=>find(app.render(),node=>typeof node.props?.onContext==='function'&&typeof node.props?.onFormat==='function').props
+  workbench().onContext({sessionId:'saved',campaignId:'entender'})
+  workbench().onFormat({id:'custom',network:'Personalizado',label:'Propio',width:0,height:0})
+  assert.equal(workbench().onSend('Crear una placa'),false)
+  const prompt='Adaptá la pieza. Formato elegido: YouTube · Miniatura · 1280 × 720.'
+  assert.equal(workbench().onSend(prompt),true)
+  await tick()
+  const posted=ui.requests.find(request=>request.url==='/api/prompt?session=saved')
+  assert.ok(posted)
+  assert.equal(JSON.parse(posted.init.body).text,prompt)
+})
 
 test('a trial guest sends without sign-in or draft reservation and updates the remaining allowance', async (t) => {
   t.mock.method(console, 'info', () => {})
