@@ -1,6 +1,7 @@
 'use client'
 
 import { useId } from 'react'
+import { socialSafeArea } from '../lib/social-safe-area'
 import { SOCIAL_FORMATS, socialFormatLabel, validSocialSize, type SocialFormat } from '../lib/social-formats'
 
 export default function SocialFormatPicker({ value, onChange, disabled = false, original = false }: {
@@ -8,6 +9,7 @@ export default function SocialFormatPicker({ value, onChange, disabled = false, 
 }) {
   const id = useId()
   const invalid = value !== null && !validSocialSize(value)
+  const safe = value && !invalid ? socialSafeArea(value.id, value.width, value.height) : null
   const custom = value?.id === 'custom'
   const networks = [...new Set(SOCIAL_FORMATS.map(format => format.network))]
   return <fieldset data-invalid={invalid || undefined} disabled={disabled} className="flex min-w-0 flex-col gap-2">
@@ -23,6 +25,7 @@ export default function SocialFormatPicker({ value, onChange, disabled = false, 
       <option value="custom">Otra red / medidas personalizadas</option>
     </select>
     {custom && <div className="grid grid-cols-2 gap-2">{(['width','height'] as const).map(dimension => <label key={dimension} htmlFor={`${id}-${dimension}`} className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">{dimension === 'width' ? 'Ancho (px)' : 'Alto (px)'}<input id={`${id}-${dimension}`} aria-invalid={invalid || undefined} type="number" min={64} max={4096} step={1} value={value[dimension] || ''} onChange={e => onChange({ ...value, [dimension]: Number(e.target.value) })} className="min-h-9 min-w-0 border border-input bg-background px-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>)}</div>}
+    {value && safe && <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Ver zona segura para información</summary><div className="mt-2 flex items-center gap-3"><svg viewBox={`0 0 ${value.width} ${value.height}`} className="h-28 w-24 shrink-0" role="img" aria-label="El rectángulo central es el área reservada para texto, logo y datos"><rect width={value.width} height={value.height} fill="currentColor" opacity=".12" /><rect x={safe.x} y={safe.y} width={safe.width} height={safe.height} fill="none" stroke="currentColor" strokeWidth={Math.max(value.width,value.height)/180} /></svg><p className="leading-5">Texto, logo, datos y CTA dentro del rectángulo. Bordes solo para decoración. Margen conservador; revisá la vista previa de la red antes de publicar.</p></div></details>}
     {invalid && <p role="status" className="text-xs text-destructive">Usá entre 64 y 4096 px por lado, hasta 16 megapíxeles.</p>}
   </fieldset>
 }

@@ -1,3 +1,6 @@
+// @ts-expect-error Node strip-types tests require the source extension.
+import { safeAreaPrompt } from './social-safe-area.ts'
+
 export interface SocialSize { width: number; height: number }
 export interface SocialFormat extends SocialSize { id: string; network: string; label: string }
 // Working canvases, not guarantees about a platform's upload rules or automatic cropping.
@@ -32,13 +35,13 @@ export function validSocialSize(size: unknown): size is SocialSize {
   return Number.isSafeInteger(width) && Number.isSafeInteger(height) && width >= 64 && height >= 64 && width <= 4096 && height <= 4096 && width * height <= 16_000_000
 }
 export function socialFormatLabel(format: SocialFormat): string { return `${format.network} · ${format.label} · ${format.width} × ${format.height}` }
-export const SOCIAL_PIECE_INSTRUCTIONS = `Para piezas visuales, cada placa debe ser un elemento independiente con data-social-piece y sus medidas nativas en data-social-width y data-social-height. Usá esas medidas exactas en px en el elemento; no dependas del zoom de la vista previa. Separá las placas del carrusel como elementos hermanos. El copy, los controles y los rótulos de vista previa van fuera de esas placas. No anides data-social-piece. Diseñá cada placa para que se lea completa, sin texto cortado ni desbordamiento. Las fotos y las portadas siguen siendo imágenes estáticas; no generes video.`
+export const SOCIAL_PIECE_INSTRUCTIONS = `Para piezas visuales, cada placa debe ser un elemento independiente con data-social-piece y sus medidas nativas en data-social-width y data-social-height. Usá esas medidas exactas en px en el elemento; no dependas del zoom de la vista previa. Separá las placas del carrusel como elementos hermanos. El copy, los controles y los rótulos de vista previa van fuera de esas placas. No anides data-social-piece. Diseñá cada placa para que se lea completa, sin texto cortado ni desbordamiento. En todas las piezas sociales, mantené toda información dentro de un contenedor data-social-safe; reservá los bordes para decoración sin texto y evitá controles, subtítulos y recortes de las redes. El logo y la firma también son información: no los pongas en el borde inferior. Marcá los objetos importantes con data-social-critical y los fondos sin información con data-social-decoration. Las fotos y las portadas siguen siendo imágenes estáticas; no generes video.`
 export function socialPrompt(prompt: string, format: SocialFormat, adapt = false): string {
   if (!validSocialSize(format)) throw new Error('Medidas inválidas. Usá valores entre 64 y 4096 px, hasta 16 megapíxeles.')
-  return `${prompt}\n\nFormato elegido: ${socialFormatLabel(format)}. ${adapt ? 'Recomponé todas las placas del diseño actual para estas medidas: redistribuí texto, geometría e imágenes, manteniendo el contenido y la identidad. No lo resuelvas recortando o deformando la pieza anterior.' : 'Si este pedido incluye una pieza visual, creala en estas medidas en lugar de cualquier tamaño anterior.'}\n${SOCIAL_PIECE_INSTRUCTIONS}\nEn formatos verticales 9:16 mantené títulos, firma y CTA lejos de los bordes superior e inferior. No agregues fechas, contactos ni condiciones comerciales sin respaldo.`
+  return `${prompt}\n\nFormato elegido: ${socialFormatLabel(format)}. ${adapt ? 'Recomponé todas las placas del diseño actual para estas medidas: redistribuí texto, geometría e imágenes, manteniendo el contenido y la identidad. No lo resuelvas recortando o deformando la pieza anterior.' : 'Si este pedido incluye una pieza visual, creala en estas medidas en lugar de cualquier tamaño anterior.'}\n${SOCIAL_PIECE_INSTRUCTIONS}\n${safeAreaPrompt(format.id, format.width, format.height)} No agregues fechas, contactos ni condiciones comerciales sin respaldo.`
 }
 
 export function socialChatPrompt(text: string, format: SocialFormat): string {
   if (!validSocialSize(format) || text.includes('Formato elegido:')) return text
-  return `${text}\n\nFormato elegido: ${socialFormatLabel(format)} para las piezas visuales. Si mi pedido especifica otra medida o red, priorizá ese pedido. Si pedí texto o un guion, respondé en el chat.`
+  return `${text}\n\nFormato elegido: ${socialFormatLabel(format)} para las piezas visuales. Si mi pedido especifica otra medida o red, priorizá ese pedido. Si pedí texto o un guion, respondé en el chat.\n${safeAreaPrompt(format.id, format.width, format.height)}`
 }

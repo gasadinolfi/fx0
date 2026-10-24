@@ -586,3 +586,13 @@ test('GB generation carries campaign and tone across turns and updates only when
   assert.match(f.sent[0].sessionOptions.instructions,/Guía v1/)
   assert.equal(f.sent[1].id,f.sent[0].id)
 })
+
+
+test('all social image requests carry safe-area rules even outside the GB workspace', async t => {
+  const f=fixture(t)
+  await runtime.submitPrompt(boundHost('social-generic'),'Ada','Create an Instagram story')
+  assert.match(f.sent[0].sessionOptions.instructions,/Social image safety/)
+  assert.match(f.sent[0].sessionOptions.instructions,/logos, signatures, data, CTAs/)
+  assert.match(f.sent[0].sessionOptions.instructions,/data-social-safe/)
+  assert.match(f.sent[0].sessionOptions.instructions,/does not change layouts for ordinary websites/)
+})

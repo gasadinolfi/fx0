@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { SOCIAL_FORMATS, validSocialSize, socialPrompt, socialChatPrompt } from '../lib/social-formats.ts'
+import { socialSafeArea, safeContentPlacement, safeAreaPrompt } from '../lib/social-safe-area.ts'
 import { crc32, imageZip } from '../lib/image-zip.ts'
 
 test('social presets cover the selected networks and all fit the export limits',()=>{
@@ -47,4 +48,55 @@ test('free-form chat keeps the selected format while preserving an explicit user
   assert.match(prompt,/1080 × 1920/)
   assert.match(prompt,/priorizá ese pedido/)
   assert.equal(socialChatPrompt(prompt,format),prompt,'a retry does not append the same format twice')
+})
+
+
+test('every social preset reserves a non-empty interior safe rectangle',()=>{
+  for(const format of SOCIAL_FORMATS){
+    const safe=socialSafeArea(format.id,format.width,format.height)
+    assert.ok(safe.x>0&&safe.y>0&&safe.width>0&&safe.height>0,format.id)
+    assert.ok(safe.x+safe.width<format.width&&safe.y+safe.height<format.height,format.id)
+  }
+  for(const id of ['instagram-story','tiktok-vertical','youtube-short']){
+    const safe=socialSafeArea(id,1080,1920)
+    assert.ok(safe.y>=420,'key content survives a central square preview crop')
+    assert.ok(safe.y+safe.height<=1248,'persistent lower controls stay clear')
+    assert.ok(safe.x+safe.width<=864,'right-hand controls stay clear')
+  }
+  const unusual=socialSafeArea('custom',64,4096)
+  assert.ok(unusual.y>=2016&&unusual.y+unusual.height<=2080)
+})
+
+test('unsafe critical content is fully placed inside the target safe zone at every export size',()=>{
+  const critical={x:25,y:20,width:1030,height:1850}
+  for(const format of SOCIAL_FORMATS){
+    const safe=socialSafeArea(format.id,format.width,format.height)
+    const placed=safeContentPlacement(1080,1920,format.width,format.height,safe,critical)
+    assert.ok(placed.x+critical.x*placed.scale>=safe.x-.001,format.id)
+    assert.ok(placed.y+critical.y*placed.scale>=safe.y-.001,format.id)
+    assert.ok(placed.x+(critical.x+critical.width)*placed.scale<=safe.x+safe.width+.001,format.id)
+    assert.ok(placed.y+(critical.y+critical.height)*placed.scale<=safe.y+safe.height+.001,format.id)
+  }
+})
+
+test('already safe designs keep their scale and position; unknown raster content stays entirely inside',()=>{
+  const safe=socialSafeArea('instagram-story',1080,1920)
+  const unchanged=safeContentPlacement(1080,1920,1080,1920,safe,{x:200,y:600,width:400,height:400})
+  assert.deepEqual(unchanged,{x:0,y:0,width:1080,height:1920,scale:1})
+  const raster=safeContentPlacement(1080,1920,1080,1920,safe,{x:0,y:0,width:1080,height:1920})
+  assert.ok(raster.x>=safe.x&&raster.y>=safe.y)
+  assert.ok(raster.x+raster.width<=safe.x+safe.width+.001)
+  assert.ok(raster.y+raster.height<=safe.y+safe.height+.001)
+})
+
+test('creation, adaptation and free-form prompts all protect logos, CTAs and information',()=>{
+  const format=SOCIAL_FORMATS.find(f=>f.id==='instagram-story')
+  for(const prompt of [socialPrompt('Crear',format),socialPrompt('Adaptar',format,true),socialChatPrompt('Crear',format)]){
+    assert.match(prompt,/Zona segura obligatoria/)
+    assert.match(prompt,/data-social-safe/)
+    assert.match(prompt,/data-social-critical/)
+    assert.match(prompt,/CTA/)
+    assert.match(prompt,/geometría decorativa sin información/)
+  }
+  assert.match(safeAreaPrompt('instagram-story',1080,1920),/data-social-format="instagram-story"/)
 })

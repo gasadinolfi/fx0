@@ -1,9 +1,10 @@
 import { DESIGN_ARTIFACT_EMBEDDED_CSP, prepareDesignArtifactHtml } from '../lib/design-artifact'
+import { socialSafeArea, safeContentPlacement } from '../lib/social-safe-area'
 import { validSocialSize, type SocialSize } from '../lib/social-formats'
 
 export type ImageFormat = 'png' | 'jpg'
-export interface DesignImage { blob: Blob; width: number; height: number }
-export interface ImageExportOptions { size?: SocialSize }
+export interface DesignImage { blob: Blob; width: number; height: number; safeAdjusted?: boolean }
+export interface ImageExportOptions { size?: SocialSize; formatId?: string }
 
 // Render only inside an opaque origin. Brand HTML never runs in the application DOM.
 export async function renderDesignImages(html: string, format: ImageFormat, options: ImageExportOptions = {}): Promise<DesignImage[]> {
@@ -21,7 +22,8 @@ export async function renderDesignImages(html: string, format: ImageFormat, opti
   const token = crypto.randomUUID(), mime = format === 'jpg' ? 'image/jpeg' : 'image/png'
   const script = `${renderer.replace(/<\/script/gi, '<\\/script')}
 ;addEventListener('load',async()=>{
-  const token=${JSON.stringify(token)}, mime=${JSON.stringify(mime)}, target=${JSON.stringify(options.size ?? null)};
+  const token=${JSON.stringify(token)}, mime=${JSON.stringify(mime)}, target=${JSON.stringify(options.size ?? null)}, selectedFormat=${JSON.stringify(options.formatId ?? null)};
+  const getSafe=${socialSafeArea.toString()}, placeSafe=${safeContentPlacement.toString()};
   try {
     const frozen=document.createElement('style');frozen.textContent='*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';document.head.append(frozen);
     await document.fonts.ready;
@@ -44,15 +46,51 @@ export async function renderDesignImages(html: string, format: ImageFormat, opti
       if(width<1||height<1||width>8192||height>8192||width*height>32000000)throw new Error('La pieza es demasiado grande. Adaptá su formato antes de descargar.');
       const output=target||nativeSize||{width,height};pixels+=output.width*output.height;
       if(pixels>64000000)throw new Error('El conjunto supera 64 megapíxeles. Usá una resolución menor.');
+      let critical=null;
+      const addRect=rect=>{
+        if(rect.width<=0||rect.height<=0)return;
+        const x=rect.left-box.left,y=rect.top-box.top;
+        if(x < -1||y < -1||x+rect.width > width+1||y+rect.height > height+1)throw new Error('Hay información fuera de la placa. Usá Adaptar pieza para redistribuirla antes de descargar.');
+        if(!critical)critical={x,y,width:rect.width,height:rect.height};
+        else {const right=Math.max(critical.x+critical.width,x+rect.width),bottom=Math.max(critical.y+critical.height,y+rect.height);critical.x=Math.min(critical.x,x);critical.y=Math.min(critical.y,y);critical.width=right-critical.x;critical.height=bottom-critical.y;}
+      };
+      if(target||isPiece){
+        for(const guide of root.querySelectorAll('[data-social-guide],[data-social-ui]'))guide.style.display='none';
+        const visible=element=>{const style=getComputedStyle(element);return style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0;};
+        const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;
+        while(node=walker.nextNode()){
+          const element=node.parentElement;
+          if(!node.textContent.trim()||!element||element.closest('script,style,noscript,template,defs')||!visible(element))continue;
+          const range=document.createRange();range.selectNodeContents(node);
+          for(const rect of range.getClientRects())addRect(rect);
+        }
+        for(const element of root.querySelectorAll('[data-social-critical],img,canvas,video,svg text')){
+          if(!visible(element))continue;
+          if(element.tagName==='IMG'&&element.closest('[data-social-decoration]')&&!element.hasAttribute('data-social-critical'))continue;
+          addRect(element.getBoundingClientRect());
+        }
+        for(const element of [root,...root.querySelectorAll('*')]){
+          if(!visible(element))continue;
+          if(/url\\s*\\(/i.test(getComputedStyle(element).backgroundImage)&&!element.closest('[data-social-decoration]'))addRect(element.getBoundingClientRect());
+          for(const pseudo of ['::before','::after']){const content=getComputedStyle(element,pseudo).content;if(content&&content!=='none'&&content!=='normal'&&content!=='""'&&content!=="''"){addRect(element.getBoundingClientRect());break;}}
+        }
+      }
       const source=await (html2canvas.default||html2canvas)(root,{width,height,scale:1,backgroundColor:null,logging:false,imageTimeout:10000});
       const canvas=document.createElement('canvas');canvas.width=output.width;canvas.height=output.height;
       const ctx=canvas.getContext('2d');if(!ctx)throw new Error('No se pudo preparar la imagen.');
       const background=[getComputedStyle(root).backgroundColor,getComputedStyle(document.body).backgroundColor].find(c=>c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)');
       if(background||mime==='image/jpeg'){ctx.fillStyle=background||'#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);}
-      const scale=Math.min(canvas.width/source.width,canvas.height/source.height),w=source.width*scale,h=source.height*scale;
-      ctx.drawImage(source,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+      const base=Math.min(canvas.width/source.width,canvas.height/source.height);
+      let placement={x:(canvas.width-source.width*base)/2,y:(canvas.height-source.height*base)/2,width:source.width*base,height:source.height*base,scale:base};
+      const originalPlacement={...placement};
+      if(target||isPiece){
+        const area=getSafe(selectedFormat||root.getAttribute('data-social-format')||'custom',canvas.width,canvas.height);
+        placement=placeSafe(source.width,source.height,canvas.width,canvas.height,area,critical||{x:0,y:0,width:source.width,height:source.height});
+      }
+      ctx.drawImage(source,placement.x,placement.y,placement.width,placement.height);
+      const safeAdjusted=Math.abs(placement.x-originalPlacement.x)>.5||Math.abs(placement.y-originalPlacement.y)>.5||Math.abs(placement.scale-originalPlacement.scale)>.001;
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('No se pudo codificar la imagen.')),mime,.95));
-      images.push({blob,width:canvas.width,height:canvas.height});
+      images.push({blob,width:canvas.width,height:canvas.height,safeAdjusted});
       source.width=source.height=canvas.width=canvas.height=0;
     }
     parent.postMessage({type:'fx0-design-images',token,images},'*');

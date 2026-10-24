@@ -118,7 +118,7 @@ export default function DesignExport({
     onNotice({ tone: 'status', text: `Rendering ${format.toUpperCase()}…` })
     try {
       const [html, { renderDesignImages }] = await Promise.all([load(), import('./design-image')])
-      const images = await renderDesignImages(html, format, exportFormat ? { size: { width: exportFormat.width, height: exportFormat.height } } : {})
+      const images = await renderDesignImages(html, format, exportFormat ? { size: { width: exportFormat.width, height: exportFormat.height }, formatId: exportFormat.id } : {})
       const slug = designFileName(title).replace(/\.html$/, '')
       const suffix = exportFormat ? `-${exportFormat.id}-${exportFormat.width}x${exportFormat.height}` : ''
       let blob: Blob, fileName: string
@@ -138,7 +138,8 @@ export default function DesignExport({
       link.click()
       link.remove()
       setTimeout(() => URL.revokeObjectURL(url), 10_000)
-      onNotice({ tone: 'status', text: images.length > 1 ? `Descargadas ${images.length} placas ${format.toUpperCase()} en ${fileName}.` : `Descargado ${fileName}.` })
+      const adjustment = images.some(image => image.safeAdjusted) ? ' Se ajustó el contenido a la zona segura.' : ''
+      onNotice({ tone: 'status', text: (images.length > 1 ? `Descargadas ${images.length} placas ${format.toUpperCase()} en ${fileName}.` : `Descargado ${fileName}.`) + adjustment })
     } catch (error) {
       if (!(error instanceof AuthRouteError)) onNotice({ tone: 'error', text: error instanceof Error ? error.message : 'No se pudo exportar la imagen. Probá con una pieza más pequeña.' })
     } finally {
@@ -208,7 +209,7 @@ export default function DesignExport({
           </svg>
           download HTML
         </button>
-        <div className="flex flex-col gap-2 border-y border-border px-2.5 py-3 my-1"><SocialFormatPicker value={exportFormat} onChange={setExportFormat} disabled={rendering} original /><p className="text-xs leading-4 text-muted-foreground">Las placas del carrusel se guardan por separado en un ZIP. Cambiar el tamaño conserva todo el contenido; para recomponerlo, usá «Adaptar pieza» en la mesa.</p></div>
+        <div className="flex flex-col gap-2 border-y border-border px-2.5 py-3 my-1"><SocialFormatPicker value={exportFormat} onChange={setExportFormat} disabled={rendering} original /><p className="text-xs leading-4 text-muted-foreground">Las placas del carrusel se guardan por separado en un ZIP. Al elegir una red se protege su zona segura. Para recomponer el diseño, usá «Adaptar pieza» en la mesa.</p></div>
         {(['png', 'jpg'] as const).map((format) => (
           <Button
             key={format}
