@@ -1724,7 +1724,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   )
 
   return (
-    <div className={cn("flex h-dvh overflow-hidden bg-background text-foreground", gb && "gb-surface")}>
+    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
       <Suspense fallback={null}><BootLoader boot={account} onBoot={adoptAccount} /></Suspense>
       <Suspense fallback={null}><BootLoader boot={sidebar} onBoot={adoptSidebar} /></Suspense>
       <Suspense fallback={null}>

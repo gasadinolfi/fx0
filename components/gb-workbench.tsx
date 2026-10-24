@@ -123,7 +123,7 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, onContext
       </>}
     </>}
     {error && <div role="alert" className="mt-3 text-sm text-destructive">{error} <Button variant="ghost" size="sm" onClick={() => void refresh().catch(e => setError(e.message))}>Recargar</Button></div>}
-    <Sheet open={open} onOpenChange={setOpen}><SheetContent className="gb-surface w-[min(96vw,760px)]">
+    <Sheet open={open} onOpenChange={setOpen}><SheetContent className="w-[min(96vw,760px)]">
       <SheetHeader className="border-b border-border p-5"><div className="flex items-center justify-between"><SheetTitle>Contexto de Bengochea</SheetTitle><SheetClose asChild><Button variant="ghost" size="sm">Cerrar</Button></SheetClose></div><SheetDescription>Guía, referencias y campañas de tu cuenta.</SheetDescription></SheetHeader>
       {state && <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col gap-4 p-5">
         <TabsList className="h-auto flex-wrap justify-start"><TabsTrigger value="guide">Guía</TabsTrigger><TabsTrigger value="sources">Insumos</TabsTrigger><TabsTrigger value="review">Revisión{state.proposal ? ' · 1' : ''}</TabsTrigger><TabsTrigger value="campaigns">Campañas</TabsTrigger></TabsList>
