@@ -1,4 +1,5 @@
-import { bindGbSession, readGbBinding, readGbWorkspace, gbCampaign, gbPromptImages } from '../../../lib/gb-store'
+import { bindGbSession, readGbBinding, readGbWorkspace, gbCampaign, gbPromptImages, claimGbPlanPost, failGbPlanPost, readGbPlanWorkspace } from '../../../lib/gb-store'
+import { SOCIAL_FORMATS, socialPrompt, validSocialSize, type SocialFormat } from '../../../lib/social-formats'
 import { readSession } from '../../../lib/journal'
 import { AuthError } from '../../../lib/accounts'
 import { readFile } from 'node:fs/promises'
@@ -35,7 +36,7 @@ export const POST = withPromptRoute(async (request, context) => {
     images?: unknown
     previews?: unknown
     generation?: { model?: unknown; effort?: unknown; fast?: unknown }
-    gb?: { campaignId?: unknown }
+    gb?: { campaignId?: unknown; postId?: unknown; format?: unknown }
     designMd?: unknown
   }
   try {
@@ -46,6 +47,7 @@ export const POST = withPromptRoute(async (request, context) => {
 
   if (!body || typeof body !== 'object' || Array.isArray(body)) return Response.json({ error: 'invalid json object' }, { status: 400 })
   if (body.gb !== undefined && (!body.gb || typeof body.gb !== 'object' || typeof body.gb.campaignId !== 'string')) return Response.json({ error: 'invalid GB campaign' }, { status: 400 })
+  if (body.gb?.postId !== undefined && (typeof body.gb.postId !== 'string' || !body.gb.postId || !validSocialSize(body.gb.format))) return Response.json({ error: 'invalid GB publication or format' }, { status: 400 })
   const gbBinding = existing ? await readGbBinding(existing.id) : null
   const gbRequested = body.gb !== undefined || gbBinding != null
   let gbCampaignId: string | null = null
@@ -53,15 +55,22 @@ export const POST = withPromptRoute(async (request, context) => {
   if (gbRequested) {
     if ('kind' in session) throw new AuthError(401, 'Ingresá a tu cuenta para usar GB.')
     if (gbBinding && gbBinding.ownerId !== user.id) throw new AuthError(404)
-    const state = await readGbWorkspace(user.id)
+    const state = body.gb?.postId ? await readGbPlanWorkspace(user.id) : await readGbWorkspace(user.id)
     const selected = gbCampaign(state, body.gb?.campaignId ?? gbBinding?.campaignId)
     if (gbBinding && gbBinding.campaignId !== selected.id) throw new AuthError(409, 'Iniciá otra conversación para cambiar de campaña.')
     if (existing && !gbBinding && await readSession(existing.id)) throw new AuthError(409, 'Esta conversación no pertenece a GB. Iniciá una nueva.')
     gbCampaignId = selected.id
     gbGuideText = state.guides.find(g => g.id === selected.guideId)!.text
+    if (body.gb?.postId && !state.plan?.posts.some(p => p.id === body.gb!.postId && p.campaignId === selected.id)) throw new AuthError(404, 'Publicación no encontrada.')
   }
 
-  const text = typeof body?.text === 'string' ? body.text.trim() : ''
+  let text = typeof body?.text === 'string' ? body.text.trim() : ''
+  if (body.gb?.postId) {
+    const size = body.gb.format as SocialFormat
+    const preset = SOCIAL_FORMATS.find(f => f.id === size.id)
+    const format: SocialFormat = { ...(preset ?? { id: 'custom', network: 'Personalizada', label: 'Medidas personalizadas' }), width: size.width, height: size.height }
+    text = socialPrompt('Creá la placa individual de la publicación vinculada del plan de cuatro semanas. Usá su título, objetivo, idea y copy guardados en el contexto. Publicá el diseño y entregá el copy en el chat.', format)
+  }
   const images = Array.isArray(body?.images)
     ? body.images.filter(
         (i): i is { type: 'image'; data: string; mimeType: string } =>
@@ -136,9 +145,11 @@ export const POST = withPromptRoute(async (request, context) => {
   const clientId = typeof body?.clientId === 'string' ? body.clientId.slice(0, 40) : undefined
   let submitted: { id: number; seq: number; trialChat: boolean }
   let activated: SessionRouteContext
+  let planAttempt: string | undefined
   try {
     activated = await context.activate()
     if (gbCampaignId) await bindGbSession(user.id, activated.id, gbCampaignId)
+    if (typeof body.gb?.postId === 'string' && gbCampaignId) planAttempt = (await claimGbPlanPost(user.id, body.gb.postId, activated.id, gbCampaignId)).attemptId
     const referenceImages = gbCampaignId && !images?.length ? await gbPromptImages(activated.id) : []
     submitted = await submitPrompt(
       activated.host,
@@ -152,6 +163,7 @@ export const POST = withPromptRoute(async (request, context) => {
       'kind' in session ? undefined : session,
     )
   } catch (error) {
+    if (planAttempt && typeof body.gb?.postId === 'string') await failGbPlanPost(user.id, body.gb.postId, planAttempt).catch(() => console.error('[gb] could not mark failed publication'))
     if (reservation) await trialStore().release(reservation).catch(() => console.error('[fx0] free prompt release failed'))
     throw error
   }

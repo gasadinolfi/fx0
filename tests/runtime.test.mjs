@@ -365,7 +365,7 @@ test('the agent offers HTML and common tools only; a tool runs on the chat its t
   const f = fixture(t)
   runtime.agent()
   const names = f.agentOptions.tools.map((tool) => tool.name)
-  assert.deepEqual(names, ['read_design', 'publish_design', 'edit_design', 'web_fetch', 'ask_user_question', 'read_tool_result', 'capability_search', 'subagent', 'web_search'])
+  assert.deepEqual(names, ['read_design', 'publish_design', 'edit_design', 'web_fetch', 'ask_user_question', 'read_tool_result', 'capability_search', 'save_gb_plan', 'subagent', 'web_search'])
   const edit = f.agentOptions.tools.find((tool) => tool.name === 'edit_design')
   assert.equal(edit.idempotent, false)
   assert.equal(edit.writes, true)

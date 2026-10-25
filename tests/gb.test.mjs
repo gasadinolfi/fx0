@@ -15,7 +15,7 @@ globalThis.__gbTestRedis = {
     values.set(key, JSON.parse(json)); if (bindingKey) values.set(bindingKey,JSON.parse(binding)); return 1
   },
 }
-const journal = 'data:text/javascript,' + encodeURIComponent('export const redis = () => globalThis.__gbTestRedis; export const prefixed = s => `test:${s}`;')
+const journal = 'data:text/javascript,' + encodeURIComponent('export const redis = () => globalThis.__gbTestRedis; export const prefixed = s => `test:${s}`; export const readEvents = async (id, after = 0) => (globalThis.__gbEvents?.[id] ?? []).slice(after); export const currentSeq = async id => globalThis.__gbEvents?.[id]?.length ?? 0; export const readSessionView = async id => ({artifactRevision: globalThis.__gbRevisions?.[id] ?? 0});')
 registerHooks({ resolve(s,c,next) {
   if (c.parentURL?.endsWith('/lib/gb-store.ts') && s === './journal') return { url: journal, shortCircuit: true }
   if (c.parentURL?.includes('/lib/') && s.startsWith('./') && !/\.[cm]?[jt]s$/.test(s)) return next(s+'.ts',c)
@@ -29,7 +29,8 @@ test('GB starts with all six campaigns and the original design.md palette, indep
   const a = await store.readGbWorkspace('a'), b = await store.readGbWorkspace('b')
   assert.equal(a.campaigns.length, 6)
   assert.equal(a.campaigns[0].title, 'Invertir empieza por entender')
-  assert.match(a.guides[0].text, /#FC5D5D/)
+  assert.match(a.guides[0].text, /#03065E/)
+  assert.doesNotMatch(a.guides[0].text, /#FC5D5D/)
   assert.match(a.guides[0].text, /no un manual oficial/)
   a.campaigns[0].title = 'mutated local copy'
   assert.notEqual((await store.readGbWorkspace('a')).campaigns[0].title, a.campaigns[0].title)
@@ -128,13 +129,78 @@ test('deleting a chat removes its campaign link without deleting the guide or ot
 
 test('the current original palette overrides older atlas references without rewriting saved guides', async () => {
   const { GB_PALETTE, GB_PALETTE_POLICY, gbGuideDownload } = await import('../lib/gb-palette.ts')
-  assert.deepEqual(GB_PALETTE,{primary:'#FC5D5D',accent:'#13B4D8',background:'#FFFFFF',text:'#03065E'})
+  assert.deepEqual(GB_PALETTE,{primary:'#03065E',accent:'#13B4D8',background:'#FFFFFF',text:'#03065E'})
   const state=await store.readGbWorkspace('palette-owner')
   const oldGuide={...state.guides[0],text:'Older atlas palette #102247 and #F0D27B'}
   const context=gbContext(oldGuide,state.campaigns[0])
   assert.ok(context.indexOf(GB_PALETTE_POLICY)>context.indexOf('</gb_guide>'))
-  assert.match(context,/prevalece sobre cualquier paleta/)
+  assert.match(context,/prevalece sobre el design.md original/)
   assert.equal(oldGuide.text,'Older atlas palette #102247 and #F0D27B')
   assert.match(gbGuideDownload(oldGuide.text),/Paleta vigente para las placas/)
-  assert.match(gbGuideDownload(oldGuide.text),/#FC5D5D/)
+  assert.match(gbGuideDownload(oldGuide.text),/#13B4D8/)
+  assert.doesNotMatch(gbGuideDownload(oldGuide.text),/#FC5D5D/)
+})
+
+function planInput() {
+  return { campaigns: [], posts: Array.from({length:20}, (_, i) => ({week:Math.floor(i/5)+1, day:i%5+1, campaignId:'entender', title:`Publicación ${i+1}`, objective:'Explicar con claridad', idea:'Una pregunta y un diagrama', copy:'Conversemos sobre tus objetivos.'})) }
+}
+
+test('plans validate all twenty unique weekday slots and reject missing campaigns', async () => {
+  const {validateGbPlan} = await import('../lib/gb-plan.ts')
+  assert.equal(validateGbPlan(planInput(), ['entender']).posts.length,20)
+  const missing=planInput(); missing.posts.pop()
+  assert.throws(()=>validateGbPlan(missing,['entender']),/20/)
+  const duplicate=planInput(); duplicate.posts[1].day=1
+  assert.throws(()=>validateGbPlan(duplicate,['entender']),/repetidas/)
+  const unknown=planInput(); unknown.posts[0].campaignId='unknown'
+  assert.throws(()=>validateGbPlan(unknown,['entender']),/campaña inválidos/)
+  const badWeek=planInput(); badWeek.posts[0].week=5
+  assert.throws(()=>validateGbPlan(badWeek,['entender']),/Semana/)
+})
+
+test('a plan persists per account, creates model campaigns, and durable retries preserve its stable ids', async () => {
+  await store.bindGbSession('plan-owner','plan-chat','entender')
+  const input=planInput()
+  input.campaigns.push({id:'new-topic',title:'Preguntas nuevas',objective:'Informar',audience:'Personas que empiezan',message:'Preguntar primero',brief:'Sin promesas comerciales.'})
+  input.posts[0].campaignId='new-topic'
+  const saved=await store.saveGbPlan('plan-chat',input)
+  const state=await store.readGbWorkspace('plan-owner')
+  assert.equal(state.plan.posts.length,20)
+  const campaign=state.campaigns.find(c=>c.origin==='model')
+  assert.equal(state.plan.posts[0].campaignId,campaign.id)
+  assert.notEqual(campaign.id,'new-topic')
+  assert.equal((await store.saveGbPlan('plan-chat',{})).planId,saved.planId)
+  assert.deepEqual((await store.readGbWorkspace('plan-owner')).plan.posts,state.plan.posts)
+  assert.equal((await store.readGbWorkspace('other-plan-owner')).plan,undefined)
+  await assert.rejects(()=>store.saveGbPlan('unbound-chat',input),/solo está disponible en GB/)
+})
+
+test('publication claims serialize generation, reconcile outcomes, retry and track edits independently', async () => {
+  await store.bindGbSession('generation-owner','planning-chat','entender')
+  await store.saveGbPlan('planning-chat',planInput())
+  const state=await store.readGbWorkspace('generation-owner')
+  const [first,second]=state.plan.posts
+  const attempt=await store.claimGbPlanPost('generation-owner',first.id,'plate-one','entender')
+  await assert.rejects(()=>store.claimGbPlanPost('generation-owner',second.id,'plate-two','entender'),/Esperá/)
+  await store.failGbPlanPost('generation-owner',first.id,'wrong-attempt')
+  assert.equal((await store.readGbWorkspace('generation-owner')).plan.posts[0].status,'generating')
+  globalThis.__gbEvents={'plate-one':[{type:'error',at:Date.now()+1,text:'Model unavailable'}]}
+  let next=await store.readGbPlanWorkspace('generation-owner')
+  assert.equal(next.plan.posts[0].status,'error')
+  await assert.rejects(()=>store.claimGbPlanPost('generation-owner',first.id,'different-chat','entender'),/conversación/)
+  const retry=await store.claimGbPlanPost('generation-owner',first.id,'plate-one','entender')
+  assert.notEqual(retry.attemptId,attempt.attemptId)
+  globalThis.__gbEvents['plate-one'].push({type:'done',at:Date.now()+10})
+  globalThis.__gbRevisions={'plate-one':1}
+  next=await store.readGbPlanWorkspace('generation-owner')
+  assert.equal(next.plan.posts[0].status,'ready')
+  assert.equal(next.plan.posts[0].revision,1)
+  assert.equal(next.plan.posts[1].revision,undefined)
+  globalThis.__gbRevisions['plate-one']=2
+  assert.equal((await store.readGbPlanWorkspace('generation-owner')).plan.posts[0].revision,2)
+  await assert.rejects(()=>store.claimGbPlanPost('generation-owner',second.id,'plate-one','entender'),/otra publicación/)
+  await assert.rejects(()=>store.claimGbPlanPost('another-owner',first.id,'plate-three','entender'),/no encontrada/)
+  await store.bindGbSession('generation-owner','plate-one','entender')
+  await store.forgetGbSession('generation-owner','plate-one')
+  assert.equal((await store.readGbWorkspace('generation-owner')).plan.posts[0].status,'pending')
 })

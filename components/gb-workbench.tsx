@@ -17,9 +17,10 @@ export interface GbSelection { sessionId: string; campaignId: string | null }
 interface Props {
   sessionId: string; busy: boolean; empty: boolean; enabled: boolean; hasDesign?: boolean;
   onFormat?: (format: SocialFormat) => void;
+  onOpenPlan?: () => void; planOpen?: boolean;
   onContext: (selection: GbSelection) => void; onNew: () => void; onSend: (text: string) => unknown;
 }
-export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign = false, onFormat, onContext, onNew, onSend }: Props) {
+export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign = false, onFormat, onOpenPlan, planOpen, onContext, onNew, onSend }: Props) {
   const [state, setState] = useState<GbWorkspace | null>(null)
   const [campaignId, setCampaignId] = useState('entender')
   const [socialFormat, setSocialFormat] = useState<SocialFormat>(SOCIAL_FORMATS[0])
@@ -77,7 +78,7 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
     if (!hasDesign || busy || !ready || !validSocialSize(format)) return
     const key = `${sessionId}:${format.id}:${format.width}:${format.height}`
     if (automatic && lastAutoFormat.current === key) return
-    const accepted = onSend(socialPrompt('Adaptá automáticamente la pieza visual actual al formato seleccionado. Aplicá la paleta coral, celeste, blanco y azul oscuro del design.md original de GB.', format, true))
+    const accepted = onSend(socialPrompt('Adaptá automáticamente la pieza visual actual al formato seleccionado. Usá exclusivamente azul oscuro #03065E, celeste #13B4D8 y blanco #FFFFFF. Los tres están permitidos como fondo.', format, true))
     if (accepted !== false) { lastAutoFormat.current = key; setError('') }
     else setError('No se pudo iniciar la adaptación. Volvé a intentarlo cuando termine la operación actual.')
   }
@@ -128,6 +129,7 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
   return <section aria-label="Mesa de trabajo de Bengochea" className="gb-workbench border-b border-border px-4 py-4 sm:px-5">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3"><span className="gb-monogram" aria-hidden="true">GB</span><div><p className="text-sm font-semibold tracking-wide">BENGOCHEA</p><p className="text-xs text-muted-foreground">Mesa de trabajo · Privada</p></div></div>
+      {onOpenPlan && <Button id="gb-plan-toggle" variant="outline" size="sm" aria-expanded={planOpen} onClick={onOpenPlan}>Plan de 4 semanas</Button>}
       <Button variant="ghost" size="sm" onClick={() => panel('guide')}>Guía e insumos{state?.proposal ? ' · 1 propuesta' : ''}</Button>
     </div>
     {!state ? <div className="py-5"><Skeleton className="h-8 w-4/5" /><Button variant="ghost" size="sm" onClick={() => void refresh().catch(e => setError(e.message))}>Volver a cargar</Button></div> : <>
@@ -158,6 +160,7 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
             <p className="text-xs text-muted-foreground">Versión de la campaña: {state.guides.findIndex(g => g.id === guide?.id) + 1}. Las nuevas campañas usan la guía vigente.</p>
             <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={downloadGuide}>Descargar DESIGN.md</Button><Button variant="outline" size="sm" onClick={() => { setEdit(state.proposal?.text ?? activeGuide!.text); setEditing(true); setTab('review') }}>Proponer cambios</Button></div>
             <section className="border border-border p-3" aria-label="Paleta vigente de GB"><p className="mb-2 text-sm font-semibold">Paleta vigente de las placas</p><p className="text-xs leading-5 text-muted-foreground">{GB_PALETTE_POLICY}</p></section>
+            <GbBackgroundExamples />
             <Markdown>{guide?.text ?? ''}</Markdown>
             <details className="border-t border-border pt-4"><summary className="cursor-pointer text-sm">Versiones anteriores</summary><div className="mt-3 flex flex-col gap-3">{state.guides.map((g, i) => <div key={g.id} className="flex items-center justify-between gap-3"><span className="text-sm">Versión {i + 1} · {g.note}{g.id === state.activeGuideId ? ' · Vigente' : ''}</span><Button variant="outline" size="sm" disabled={saving || busy || g.id === state.activeGuideId || !!state.proposal} onClick={() => void mutate({ action: 'activate', guideId: g.id })}>Recuperar</Button></div>)}</div></details>
           </TabsContent>
@@ -185,6 +188,24 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
         </div>
       </Tabs>}
     </SheetContent></Sheet>
+  </section>
+}
+export function GbBackgroundExamples() {
+  return <section aria-label="Comparación de fondos de GB" className="flex flex-col gap-4">
+    <p className="text-xs leading-5 text-muted-foreground">Misma placa, tres fondos permitidos. Ninguno es obligatorio para todas las publicaciones.</p>
+    {[
+      { name: 'Azul oscuro', background: GB_PALETTE.text, foreground: GB_PALETTE.background, line: GB_PALETTE.accent },
+      { name: 'Celeste', background: GB_PALETTE.accent, foreground: GB_PALETTE.text, line: GB_PALETTE.text },
+      { name: 'Blanco', background: GB_PALETTE.background, foreground: GB_PALETTE.text, line: GB_PALETTE.accent },
+    ].map(variant => <figure key={variant.name} className="flex flex-col gap-2">
+      <div style={{ backgroundColor: variant.background, color: variant.foreground }} className="flex aspect-[4/5] flex-col justify-between overflow-hidden border border-border p-6">
+        <p className="text-[10px] uppercase tracking-[0.2em]">Bengochea / Comunicación</p>
+        <h3 className="text-3xl font-semibold leading-tight tracking-tight">Invertir empieza por entender</h3>
+        <svg viewBox="0 0 300 150" className="w-full" fill="none" stroke={variant.line} strokeWidth="1" aria-hidden="true">{[80, 115, 150, 185, 220].map(x => <g key={x}><circle cx={x} cy="75" r="48" /><ellipse cx={x} cy="75" rx="18" ry="48" /></g>)}</svg>
+        <p style={{ borderColor: variant.line }} className="border-t pt-3 text-xs">BENGOCHEA · INVERSIONES</p>
+      </div>
+      <figcaption className="text-xs text-muted-foreground">{variant.name} · {variant.background}</figcaption>
+    </figure>)}
   </section>
 }
 function GuideComparison({ before, after }: { before: string; after: string }) {

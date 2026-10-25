@@ -15,6 +15,9 @@ const mocks = {
     import { AuthError } from './accounts.ts';
     export async function readGbBinding(id) { return globalThis.securityTest.gbBindings?.get(id) ?? null; }
     export async function readGbWorkspace(owner) { const s = globalThis.securityTest; s.gbOwners ??= []; s.gbOwners.push(owner); return structuredClone(s.gbWorkspace ?? { revision: 0, guides: [], campaigns: [] }); }
+    export const readGbPlanWorkspace = readGbWorkspace;
+    export async function claimGbPlanPost(owner, postId, sessionId, campaignId) { const state = await readGbWorkspace(owner); const post = state.plan?.posts.find(p => p.id === postId && p.campaignId === campaignId); if (!post) throw new AuthError(404); return { attemptId: 'attempt', post }; }
+    export async function failGbPlanPost() {}
     export async function mutateGb(owner, revision, change) { const state = await readGbWorkspace(owner); if (state.revision !== revision) throw new AuthError(409); change(state); state.revision++; globalThis.securityTest.gbWorkspace = state; return state; }
     export async function readGbSource(owner,id) { const source=globalThis.securityTest.gbSources?.get(owner+':'+id); if (!source) throw new AuthError(404); return source; }
     export async function addGbSource() { throw new Error('not used in route security tests'); }
@@ -801,6 +804,14 @@ test('GB cannot attach a campaign to an existing general chat or rebind another 
   assert.equal((await routes.prompt.POST(request('prompt','POST',own,{text:'Create',gb:{campaignId:'a'}}))).status,409)
   reset({gbBindings:new Map([[own,{ownerId:'user_a',campaignId:'b'}]]),gbWorkspace:{campaigns:[{id:'a',guideId:'v1'}],guides:[{id:'v1',text:'Guide'}]}})
   assert.equal((await routes.prompt.POST(request('prompt','POST',own,{text:'Create',gb:{campaignId:'a'}}))).status,409)
+})
+
+test('GB publication prompts reject invalid formats and foreign or mismatched plan entries', async () => {
+  reset({gbBindings:new Map([[own,{ownerId:'user_a',campaignId:'a'}]]),gbWorkspace:{campaigns:[{id:'a',guideId:'v1'}],guides:[{id:'v1',text:'Guide'}],plan:{posts:[{id:'post-a',campaignId:'a'}]}}})
+  const send=gb=>routes.prompt.POST(request('prompt','POST',own,{text:'Create',gb}))
+  assert.equal((await send({campaignId:'a',postId:'post-a',format:{width:0,height:1080}})).status,400)
+  assert.equal((await send({campaignId:'a',postId:42,format:{width:1080,height:1080}})).status,400)
+  assert.equal((await send({campaignId:'a',postId:'foreign-post',format:{width:1080,height:1080}})).status,404)
 })
 
 

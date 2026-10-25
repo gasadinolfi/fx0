@@ -77,6 +77,7 @@ test('design mode exposes only design and common host tools', async () => {
       'ask_user_question',
       'read_tool_result',
       'capability_search',
+      'save_gb_plan',
       'subagent',
     ],
   )

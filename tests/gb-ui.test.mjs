@@ -11,7 +11,7 @@ const root = new URL('../',import.meta.url)
 const projectUrl = new URL('../package.json',import.meta.url).href
 const output = realpathSync(mkdtempSync(join(tmpdir(),'fx0-gb-ui-')))
 after(() => rmSync(output,{recursive:true,force:true}))
-execFileSync(process.execPath,[fileURLToPath(new URL('../node_modules/typescript/bin/tsc',import.meta.url)),'--ignoreConfig','--outDir',output,'--strict','--types','node','--jsx','react-jsx','--target','esnext','--module','esnext','--moduleResolution','bundler','--skipLibCheck','--esModuleInterop','components/gb-workbench.tsx'],{cwd:root,stdio:'pipe'})
+execFileSync(process.execPath,[fileURLToPath(new URL('../node_modules/typescript/bin/tsc',import.meta.url)),'--ignoreConfig','--outDir',output,'--strict','--types','node','--jsx','react-jsx','--target','esnext','--module','esnext','--moduleResolution','bundler','--skipLibCheck','--esModuleInterop','components/gb-workbench.tsx','components/gb-plan-panel.tsx'],{cwd:root,stdio:'pipe'})
 writeFileSync(join(output,'package.json'),'{"type":"module"}')
 const outputUrl=pathToFileURL(`${output}/`).href
 const hooks=registerHooks({resolve(s,c,next){
@@ -20,7 +20,8 @@ const hooks=registerHooks({resolve(s,c,next){
   return next(s,{...c,parentURL:projectUrl})
 }})
 after(()=>hooks.deregister())
-const {default:Workbench,GbEmptyPreview}=await import(pathToFileURL(join(output,'components/gb-workbench.js')).href)
+const {default:Workbench,GbEmptyPreview,GbBackgroundExamples}=await import(pathToFileURL(join(output,'components/gb-workbench.js')).href)
+const {default:PlanPanel}=await import(pathToFileURL(join(output,'components/gb-plan-panel.js')).href)
 const {socialPrompt,SOCIAL_FORMATS}=await import(pathToFileURL(join(output,'lib/social-formats.js')).href)
 const {GB_SEED_CAMPAIGNS,GB_ACTIONS}=await import(pathToFileURL(join(output,'lib/gb-model.js')).href)
 const tick=()=>new Promise(r=>setImmediate(r))
@@ -190,5 +191,67 @@ test('the GB sample uses original brand colors inside the artwork',()=>{
   const poster=find(tree,n=>n.props?.className?.includes('gb-reference-poster'))
   assert.equal(poster.props.style.backgroundColor,'#FFFFFF')
   assert.equal(poster.props.style.color,'#03065E')
-  assert.equal(find(tree,n=>n.type==='svg').props.style.color,'#FC5D5D')
+  assert.equal(find(tree,n=>n.type==='svg').props.style.color,'#03065E')
+})
+
+test('background comparison keeps the same artwork across all three permitted backgrounds', () => {
+  const tree = GbBackgroundExamples()
+  const figures = tree.props.children[1]
+  assert.equal(figures.length, 3)
+  assert.deepEqual(figures.map(f => f.props.children[0].props.style.backgroundColor), ['#03065E', '#13B4D8', '#FFFFFF'])
+  assert.equal(new Set(figures.map(f => f.props.children[0].props.children[1].props.children)).size, 1)
+  assert.equal(new Set(figures.map(f => f.props.children[0].props.className)).size, 1)
+})
+
+function panelSetup(t, {hasPlan=false}={}) {
+  const s=setup(t)
+  window.matchMedia=()=>({matches:true,addEventListener(){},removeEventListener(){}})
+  window.location.assign=url=>s.navigations.push(url)
+  t.mock.method(globalThis,'setTimeout',()=>1)
+  t.mock.method(globalThis,'clearTimeout',()=>{})
+  if(hasPlan)s.state.plan={id:'p',posts:Array.from({length:20},(_,i)=>({id:`p${i}`,week:Math.floor(i/5)+1,day:i%5+1,campaignId:'entender',title:`Título ${i}`,objective:'Objetivo',idea:'Idea',copy:'Copy',status:i===0?'ready':'pending',sessionId:i===0?'saved-plate':undefined,revision:i===0?3:undefined}))}
+  const view=renderHooks(PlanPanel)
+  t.after(()=>view.cleanup())
+  const props={open:true,onOpenChange:value=>s.navigations.push(value),busy:false,format:SOCIAL_FORMATS[1],onGeneratePlan:value=>s.sent.push(value)}
+  return {...s,view,props}
+}
+
+test('the plan panel opens, requests planning without artwork and closes independently',async t=>{
+  const s=panelSetup(t)
+  s.view.render(s.props);s.view.flush();await tick()
+  let tree=s.view.render(s.props)
+  assert.equal(tree.type,'aside')
+  button(tree,'Generar plan').props.onClick()
+  assert.match(s.sent[0],/save_gb_plan/)
+  assert.match(s.sent[0],/no publiques diseños/)
+  button(tree,'Cerrar').props.onClick()
+  assert.equal(s.navigations.at(-1),false)
+  assert.equal(s.view.render({...s.props,open:false}),null)
+})
+
+test('the plan panel displays four weeks, stable result links and starts only the chosen publication',async t=>{
+  const s=panelSetup(t,{hasPlan:true})
+  s.view.render(s.props);s.view.flush();await tick()
+  const tree=s.view.render(s.props)
+  assert.ok(find(tree,n=>n.props?.['aria-label']==='Semana 4'))
+  assert.equal(find(tree,n=>n.type==='iframe').props.src,'/api/artifact-frame?session=saved-plate&revision=3')
+  t.mock.method(globalThis,'fetch',async(url,init)=>{
+    s.requests.push({url,init})
+    return new Response('',{headers:{'x-fx0-session':'new-plate'}})
+  })
+  await button(tree,'Generar placa').props.onClick();await tick()
+  const request=s.requests.at(-1)
+  assert.equal(request.url,'/api/prompt?session=new')
+  const body=JSON.parse(request.init.body)
+  assert.equal(body.gb.postId,'p1')
+  assert.deepEqual(body.gb.format,SOCIAL_FORMATS[1])
+  assert.equal(s.navigations.at(-1),'/gb?s=new-plate&view=preview')
+})
+
+test('a failed plaque request remains visible after workspace refresh',async t=>{
+  const s=panelSetup(t,{hasPlan:true})
+  s.view.render(s.props);s.view.flush();await tick()
+  t.mock.method(globalThis,'fetch',async(url,init)=>init?.method?Response.json({error:'Servicio no disponible'},{status:503}):Response.json({state:s.state}))
+  button(s.view.render(s.props),'Generar placa').props.onClick();await tick();await tick()
+  assert.match(text(s.view.render(s.props)),/Servicio no disponible/)
 })

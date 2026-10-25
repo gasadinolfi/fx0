@@ -1,14 +1,15 @@
 import { GB_PALETTE_POLICY } from './gb-palette'
 import { SOCIAL_PIECE_INSTRUCTIONS } from './social-formats'
+import type { GbPlan } from './gb-plan'
 
 export interface GbGuide { id: string; text: string; createdAt: number; sourceIds: string[]; note: string }
 export interface GbSource { id: string; name: string; mime: string; bytes: number; createdAt: number; seed?: string }
 export interface GbCampaign {
   id: string; title: string; objective: string; audience: string; message: string; formats: string;
-  brief: string; guideId: string; sessionIds: string[]; createdAt: number; page?: number
+  brief: string; guideId: string; sessionIds: string[]; createdAt: number; page?: number; origin?: 'model'
 }
 export interface GbProposal { id: string; baseGuideId: string; text: string; sourceIds: string[]; createdAt: number }
-export interface GbWorkspace { revision: number; activeGuideId: string; guides: GbGuide[]; sources: GbSource[]; campaigns: GbCampaign[]; proposal: GbProposal | null }
+export interface GbWorkspace { revision: number; activeGuideId: string; guides: GbGuide[]; sources: GbSource[]; campaigns: GbCampaign[]; proposal: GbProposal | null; plan?: GbPlan }
 export interface GbBinding { ownerId: string; campaignId: string }
 export const GB_MAX_GUIDE_BYTES = 70 * 1024
 export const GB_MAX_FILE_BYTES = 3 * 1024 * 1024

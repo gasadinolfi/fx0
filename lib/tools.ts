@@ -14,6 +14,7 @@ export interface ToolHost {
   spawnSubagent(task: string, signal: AbortSignal): Promise<string>
   capabilitySearch(query: string): { name: string; kind: string; description: string }[]
   readDesign(): Promise<{ html: string | null; artifactRevision: number }>
+  saveGbPlan?(input: unknown): Promise<unknown>
   publishDesign(
     html: string,
   ): Promise<{ ok: true; revision: number; changed: boolean } | { ok: false; reason: string; error: string }>
@@ -238,7 +239,22 @@ export function createTools(host: ToolHost, opts: { allowSubagent?: boolean } = 
     },
   }
 
-  const tools: FxHostTool[] = [readDesign, publishDesign, editDesign, webFetch, askUser, readToolResult, capabilitySearch]
+  const campaignFields = Object.fromEntries(['id', 'title', 'objective', 'audience', 'message', 'brief'].map(k => [k, { type: 'string' }]))
+  const postFields = Object.fromEntries(['campaignId', 'title', 'objective', 'idea', 'copy'].map(k => [k, { type: 'string' }]))
+  const savePlan: FxHostTool = {
+    name: 'save_gb_plan',
+    description: 'Save the GB four-week content plan, exactly five posts per week (day 1 Monday to 5 Friday). campaigns contains only NEW campaigns with temporary unique ids; posts can reference those ids or existing campaign ids from GB context. Does not generate artwork. Only available to GB chats. An existing plan is preserved.',
+    inputSchema: { type: 'object', additionalProperties: false, required: ['campaigns', 'posts'], properties: {
+      campaigns: { type: 'array', maxItems: 20, items: { type: 'object', additionalProperties: false, properties: campaignFields, required: Object.keys(campaignFields) } },
+      posts: { type: 'array', minItems: 20, maxItems: 20, items: { type: 'object', additionalProperties: false, properties: { week: { type: 'integer', minimum: 1, maximum: 4 }, day: { type: 'integer', minimum: 1, maximum: 5 }, ...postFields }, required: ['week', 'day', ...Object.keys(postFields)] } },
+    } },
+    async execute(input: unknown) {
+      host.reportInvocation('save_gb_plan')
+      if (!host.saveGbPlan) return { ok: false, error: 'Disponible únicamente en GB.' }
+      try { return await host.saveGbPlan(input) } catch (error) { return { ok: false, error: (error as Error).message } }
+    },
+  }
+  const tools: FxHostTool[] = [readDesign, publishDesign, editDesign, webFetch, askUser, readToolResult, capabilitySearch, savePlan]
 
   if (allowSubagent) {
     tools.push({

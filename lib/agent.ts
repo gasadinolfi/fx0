@@ -116,6 +116,7 @@ function buildToolHost(host: SessionState, turnId: number): ToolHost {
       return { html, artifactRevision: view.artifactRevision }
     },
     publishDesign,
+    saveGbPlan: input => import('./gb-store').then(store => store.saveGbPlan(host.id, input)),
     // All of a request's changes in one call: applied in order to an in-memory copy,
     // then validated and published once. Any failed match publishes nothing.
     editDesign: async (edits) => {

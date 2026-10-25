@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { withUserRoute } from '@/lib/route-auth'
 import { AuthError, assertSessionOwner } from '@/lib/accounts'
-import { mutateGb, readGbWorkspace, gbCampaign, readGbBinding, readGbSource, addGbSource } from '@/lib/gb-store'
+import { mutateGb, readGbPlanWorkspace, gbCampaign, readGbBinding, readGbSource, addGbSource } from '@/lib/gb-store'
 import { validateGbGuide, GB_MAX_FILE_BYTES } from '@/lib/gb-model'
 import { extractGbUpload } from '@/lib/gb-upload'
 
@@ -18,7 +18,7 @@ export const GET = withUserRoute(async (request, { user }) => {
     // HTML is returned as extracted text in JSON. It is never rendered/executed.
     return Response.json({ ...source, base64: source.meta.mime.startsWith('image/') ? source.base64 : undefined })
   }
-  const state = await readGbWorkspace(user.id)
+  const state = await readGbPlanWorkspace(user.id)
   let binding = null
   const session = params.get('session')
   if (session && session !== 'draft') {

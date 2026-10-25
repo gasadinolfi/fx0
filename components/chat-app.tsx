@@ -33,6 +33,7 @@ import NewChat from './new-chat'
 import type { GbSelection } from './gb-workbench'
 import { socialChatPrompt, validSocialSize, type SocialFormat } from '../lib/social-formats'
 const GbWorkbench = dynamic(() => import('./gb-workbench'), { ssr: false })
+const GbPlanPanel = dynamic(() => import('./gb-plan-panel'), { ssr: false })
 const GbEmptyPreview = dynamic(() => import('./gb-workbench').then(module => module.GbEmptyPreview), { ssr: false })
 
 // Rarely opened and pulls in Sheet and Tabs; loaded on first open, not with the page.
@@ -398,6 +399,16 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   // On a phone the conversation and the preview take turns, so the visitor picks one;
   // a wide screen shows both and the preview is always open.
   const [previewChosen, setPreviewChosen] = useState(!gb)
+  const [gbPlanOpen, setGbPlanOpen] = useState(false)
+  useEffect(() => {
+    if (!gb) return
+    try { setGbPlanOpen(localStorage.getItem('gb-plan-open') === 'true') } catch { /* Storage can be disabled. */ }
+  }, [gb])
+  function changeGbPlanOpen(open: boolean) {
+    setGbPlanOpen(open)
+    if (!open) requestAnimationFrame(() => document.getElementById('gb-plan-toggle')?.focus())
+    try { localStorage.setItem('gb-plan-open', String(open)) } catch { /* Keep the panel usable without storage. */ }
+  }
   const [wide, setWide] = useState(true)
   const previewOpen = previewChosen || wide
   const [startedTurns, setStartedTurns] = useState<Set<number>>(initialState.startedTurns)
@@ -586,7 +597,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
     reconcilePaneWidths()
     window.addEventListener('resize', reconcilePaneWidths)
     return () => window.removeEventListener('resize', reconcilePaneWidths)
-  }, [previewOpen])
+  }, [previewOpen, gbPlanOpen])
 
   useEffect(() => {
     if (!canAccessSession) return
@@ -1462,15 +1473,16 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
   }
 
   function paneMax(pane: 'sidebar' | 'agent'): number {
+    const planWidth = gb && gbPlanOpen && window.innerWidth >= 1280 ? 360 : 0
     if (pane === 'sidebar') {
       if (!previewOpen || window.innerWidth < 1024) return SIDEBAR_WIDTH.max
       return Math.min(
         SIDEBAR_WIDTH.max,
-        Math.max(SIDEBAR_WIDTH.min, window.innerWidth - agentWidthRef.current - MIN_PREVIEW_WIDTH),
+        Math.max(SIDEBAR_WIDTH.min, window.innerWidth - agentWidthRef.current - MIN_PREVIEW_WIDTH - planWidth),
       )
     }
     const available = mainRef.current?.clientWidth ?? window.innerWidth - sidebarWidthRef.current
-    return Math.min(AGENT_WIDTH.max, Math.max(AGENT_WIDTH.min, available - MIN_PREVIEW_WIDTH))
+    return Math.min(AGENT_WIDTH.max, Math.max(AGENT_WIDTH.min, available - MIN_PREVIEW_WIDTH - planWidth))
   }
 
   function setPaneCollapse(pane: Pane, next: boolean) {
@@ -1974,7 +1986,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
             )}
           </header>
 
-          {gb && <GbWorkbench onFormat={setGbSocialFormat} hasDesign={artifactRevision > 0} sessionId={sessionId} enabled={isAuthenticated && !authBlocked} busy={awaiting || activeTurnId != null} empty={entries.length === 0} onContext={setGbSelection} onNew={newDesign} onSend={sendFromTranscript} />}
+          {gb && <GbWorkbench onOpenPlan={() => changeGbPlanOpen(!gbPlanOpen)} planOpen={gbPlanOpen} onFormat={setGbSocialFormat} hasDesign={artifactRevision > 0} sessionId={sessionId} enabled={isAuthenticated && !authBlocked} busy={awaiting || activeTurnId != null} empty={entries.length === 0} onContext={setGbSelection} onNew={newDesign} onSend={sendFromTranscript} />}
 
           <div
             ref={threadRef}
@@ -2085,6 +2097,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
             ))}
           </>
         )}
+        {gb && isAuthenticated && !authBlocked && <GbPlanPanel open={gbPlanOpen} onOpenChange={changeGbPlanOpen} busy={awaiting || activeTurnId != null} format={gbSocialFormat} onGeneratePlan={sendFromTranscript} />}
       </main>
 
       <span role="status" aria-live="polite" className="sr-only">

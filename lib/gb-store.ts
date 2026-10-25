@@ -4,6 +4,7 @@ import path from 'node:path'
 import { redis, prefixed } from './journal'
 import { AuthError } from './accounts'
 import { GB_SEED_CAMPAIGNS, gbContext, validateGbGuide, type GbWorkspace, type GbBinding, type GbSource } from './gb-model'
+import { validateGbPlan } from './gb-plan'
 
 const ownerKey = (owner: string) => prefixed(`gb:owner:${createHash('sha256').update(owner).digest('hex')}`)
 const sourceKey = (owner: string, id: string) => `${ownerKey(owner)}:source:${id}`
@@ -90,7 +91,7 @@ export async function gbSessionContext(sessionId: string): Promise<string | null
   const campaign = gbCampaign(state, binding.campaignId)
   const guide = state.guides.find(g => g.id === campaign.guideId)
   if (!guide) throw new Error('No se encontró la versión de guía de la campaña.')
-  return gbContext(guide, campaign)
+  return gbContext(guide, campaign) + `\n\n<gb_planning_context>\n${JSON.stringify({ campaigns: state.campaigns, sources: state.sources.map(s => ({ id: s.id, name: s.name })), hasPlan: !!state.plan, publication: state.plan?.posts.find(p => p.sessionId === sessionId) ?? null })}\n</gb_planning_context>\nPara planificar cuatro semanas, usá save_gb_plan con exactamente 20 publicaciones, cinco por semana. Reutilizá los IDs de campañas existentes; declaralas en campaigns solo si son nuevas. No generes placas al planificar.`
 }
 export async function readGbSource(owner: string, id: string): Promise<{ meta: GbSource; text: string; base64: string }> {
   const state = await readGbWorkspace(owner)
@@ -136,6 +137,82 @@ export async function forgetGbSession(owner: string, sessionId: string): Promise
   if (!binding || binding.ownerId !== owner) return
   await mutateGb(owner, undefined, state => {
     for (const campaign of state.campaigns) campaign.sessionIds = campaign.sessionIds.filter(id => id !== sessionId)
+    for (const post of state.plan?.posts ?? []) if (post.sessionId === sessionId) {
+      delete post.sessionId; delete post.revision; delete post.attemptId; delete post.startedAt; delete post.startSeq;
+      post.status = 'pending'; delete post.error;
+    }
   })
   await redis().del(bindingKey(sessionId))
+}
+
+export async function saveGbPlan(sessionId: string, input: unknown) {
+  const binding = await readGbBinding(sessionId)
+  if (!binding) throw new AuthError(403, 'La planificación solo está disponible en GB.')
+  const state = await mutateGb(binding.ownerId, undefined, state => {
+    if (state.plan) return // Durable tool retries preserve the first saved plan.
+    const plan = validateGbPlan(input, state.campaigns.map(c => c.id))
+    const ids = new Map(plan.campaigns.map(c => [c.id, randomUUID()]))
+    for (const c of plan.campaigns) state.campaigns.push({
+      id: ids.get(c.id)!, title: c.title, objective: c.objective, audience: c.audience,
+      message: c.message, brief: c.brief, formats: 'Publicación individual', origin: 'model',
+      guideId: state.activeGuideId, sessionIds: [], createdAt: Date.now(),
+    })
+    state.plan = { id: randomUUID(), createdAt: Date.now(), posts: plan.posts.map(p => ({
+      id: randomUUID(), week: p.week, day: p.day, campaignId: ids.get(p.campaignId) ?? p.campaignId,
+      title: p.title, objective: p.objective, idea: p.idea, copy: p.copy, status: 'pending' as const,
+    })).sort((a, b) => a.week - b.week || a.day - b.day) }
+  })
+  return { ok: true, planId: state.plan!.id, posts: state.plan!.posts.length }
+}
+
+// Reconcile from the durable journal, including after reloads or disconnected clients.
+export async function readGbPlanWorkspace(owner: string): Promise<GbWorkspace> {
+  const state = await readGbWorkspace(owner)
+  const linked = state.plan?.posts.filter(p => p.sessionId) ?? []
+  if (!linked.length) return state
+  const { readEvents, readSessionView } = await import('./journal')
+  const updates = await Promise.all(linked.map(async post => {
+    const view = await readSessionView(post.sessionId!)
+    if (post.status !== 'generating') return { id: post.id, attempt: post.attemptId, revision: Math.max(post.revision ?? 0, view.artifactRevision), status: post.status, error: post.error }
+    const events = await readEvents(post.sessionId!, post.startSeq ?? 0)
+    const end = events.filter(e => (e.at ?? 0) >= (post.startedAt ?? 0) && (e.type === 'done' || e.type === 'error')).at(-1)
+    if (!end && Date.now() - (post.startedAt ?? Date.now()) < 15 * 60_000) return null
+    const ready = end?.type === 'done' && view.artifactRevision > 0
+    return { id: post.id, attempt: post.attemptId, revision: Math.max(post.revision ?? 0, view.artifactRevision), status: ready ? 'ready' as const : 'error' as const, error: ready ? undefined : end?.text ?? 'No se completó la placa. Podés reintentar.' }
+  }))
+  const changed = updates.filter(u => u && linked.some(p => p.id === u.id && (p.status !== u.status || (p.revision ?? 0) !== u.revision || p.error !== u.error)))
+  if (!changed.length) return state
+  return mutateGb(owner, undefined, current => {
+    for (const update of changed) {
+      const post = current.plan?.posts.find(p => p.id === update!.id)
+      if (post && post.attemptId === update!.attempt) {
+        if (post.status === 'ready' && update!.status === 'error') continue
+        post.status = update!.status; post.revision = Math.max(post.revision ?? 0, update!.revision); post.error = update!.error
+      }
+    }
+  })
+}
+
+export async function claimGbPlanPost(owner: string, postId: string, sessionId: string, campaignId: string) {
+  const attemptId = randomUUID()
+  const { currentSeq } = await import('./journal')
+  const startSeq = await currentSeq(sessionId)
+  const state = await mutateGb(owner, undefined, state => {
+    const post = state.plan?.posts.find(p => p.id === postId && p.campaignId === campaignId)
+    if (!post) throw new AuthError(404, 'Publicación no encontrada.')
+    if (state.plan!.posts.some(p => p.status === 'generating')) throw new AuthError(409, 'Esperá a que termine la placa en curso.')
+    if (post.status === 'ready') throw new AuthError(409, 'La placa ya está creada. Abrila para editarla.')
+    if (state.plan!.posts.some(p => p.id !== post.id && p.sessionId === sessionId)) throw new AuthError(409, 'Esta conversación pertenece a otra publicación.')
+    if (post.sessionId && post.sessionId !== sessionId) throw new AuthError(409, 'Reintentá en la conversación de esta publicación.')
+    post.sessionId = sessionId; post.attemptId = attemptId; post.startedAt = Date.now(); post.startSeq = startSeq;
+    post.status = 'generating'; delete post.error;
+  })
+  return { attemptId, post: state.plan!.posts.find(p => p.id === postId)! }
+}
+
+export async function failGbPlanPost(owner: string, postId: string, attemptId: string) {
+  await mutateGb(owner, undefined, state => {
+    const post = state.plan?.posts.find(p => p.id === postId && p.attemptId === attemptId)
+    if (post) { post.status = 'error'; post.error = 'No se pudo iniciar la placa. Volvé a intentarlo.' }
+  })
 }
