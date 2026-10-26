@@ -1,4 +1,6 @@
 import type { FxAgent } from 'libfx'
+import { GB_ATLAS_POLICY } from './gb-atlas'
+import { GB_MODEL } from './gb-generation'
 import { createTools, type AskQuestion, type ToolHost } from './tools'
 import { assertGenerationCredential } from './gateway-session'
 import { chatSession, durableAgent, runSubagent, type ChatRuntime } from './libfx-agent'
@@ -77,7 +79,7 @@ export function agent(): FxAgent {
 export async function getSessionGenerationOptions(host: SessionState) {
   const stored = await hydrateSession(host)
   return {
-    model: host.preferredModel ?? '',
+    model: host.gbContext ? GB_MODEL : host.preferredModel ?? '',
     effort: host.preferredEffort ?? '',
     fast: effectiveFast(host),
     ...(stored?.trialChat ? { trialChat: true as const } : {}),
@@ -181,6 +183,7 @@ async function hydrateSession(host: SessionState): Promise<StoredSession | null>
   host.preferredFast = stored?.preferredFast ?? null
   host.gbContext = stored?.designMd?.source.startsWith('gb:')
     ? await (await import('./gb-store')).gbSessionContext(host.id) : null
+  if (host.gbContext) host.gbContext += `\n\n# Composición obligatoria del atlas\n${GB_ATLAS_POLICY}`
   const design = stored?.designMd ?? null
   if (design?.sha !== host.designMd?.sha) {
     const text = design ? await readDesignMd(host.id) : null
@@ -342,10 +345,14 @@ async function setGenerationOptions(
 }
 
 // Changing the model resets fast mode unless the same change sets fast explicitly.
-export function setSessionGeneration(
+export async function setSessionGeneration(
   host: SessionState,
   change: { model?: string | null; effort?: string | null; fast?: boolean },
 ) {
+  await hydrateSession(host)
+  if (host.gbContext && ((change.model !== undefined && change.model !== GB_MODEL) || change.fast === true)) {
+    return { ok: false, error: 'GB usa únicamente GPT 6 Luna.' }
+  }
   const fields: Partial<Pick<SessionState, 'preferredModel' | 'preferredEffort' | 'preferredFast'>> = {}
   const messages: string[] = []
   if (change.model !== undefined) {

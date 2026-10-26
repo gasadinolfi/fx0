@@ -240,7 +240,7 @@ export async function runSubagent(
     apiKey: 'session-authenticated',
     fetch: chatFetch(async () => chatId, () => turnId),
     model: pinned
-      ? { id: pinned.model, effort: pinned.effort as FxEffort, fast: pinned.fast }
+      ? { id: host.gbContext ? effectiveModel(host) : pinned.model, effort: pinned.effort as FxEffort, fast: host.gbContext ? false : pinned.fast }
       : chatModel(host, !!credential && 'kind' in credential),
     instructions,
     tools: [

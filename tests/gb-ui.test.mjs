@@ -22,6 +22,7 @@ const hooks=registerHooks({resolve(s,c,next){
 after(()=>hooks.deregister())
 const {default:Workbench,GbEmptyPreview,GbBackgroundExamples}=await import(pathToFileURL(join(output,'components/gb-workbench.js')).href)
 const {default:PlanPanel}=await import(pathToFileURL(join(output,'components/gb-plan-panel.js')).href)
+const {default:AtlasPoster}=await import(pathToFileURL(join(output,'components/gb-atlas-poster.js')).href)
 const {socialPrompt,SOCIAL_FORMATS}=await import(pathToFileURL(join(output,'lib/social-formats.js')).href)
 const {GB_SEED_CAMPAIGNS,GB_ACTIONS}=await import(pathToFileURL(join(output,'lib/gb-model.js')).href)
 const tick=()=>new Promise(r=>setImmediate(r))
@@ -191,16 +192,40 @@ test('the GB sample uses original brand colors inside the artwork',()=>{
   const poster=find(tree,n=>n.props?.className?.includes('gb-reference-poster'))
   assert.equal(poster.props.style.backgroundColor,'#FFFFFF')
   assert.equal(poster.props.style.color,'#03065E')
-  assert.equal(find(tree,n=>n.type==='svg').props.style.color,'#03065E')
+  const artwork=find(tree,n=>n.type===AtlasPoster)
+  assert.equal(AtlasPoster(artwork.props).props.viewBox,'0 0 1080 1350')
 })
 
 test('background comparison keeps the same artwork across all three permitted backgrounds', () => {
   const tree = GbBackgroundExamples()
   const figures = tree.props.children[1]
   assert.equal(figures.length, 3)
-  assert.deepEqual(figures.map(f => f.props.children[0].props.style.backgroundColor), ['#03065E', '#13B4D8', '#FFFFFF'])
-  assert.equal(new Set(figures.map(f => f.props.children[0].props.children[1].props.children)).size, 1)
-  assert.equal(new Set(figures.map(f => f.props.children[0].props.className)).size, 1)
+  const posters=figures.map(f=>AtlasPoster(f.props.children[0].props))
+  assert.deepEqual(posters.map(p=>p.props.style.backgroundColor), ['#03065E', '#13B4D8', '#FFFFFF'])
+  assert.equal(new Set(posters.map(p=>p.props['aria-label'])).size,1)
+  assert.equal(new Set(posters.map(p=>p.props.viewBox)).size,1)
+})
+
+test('the atlas preview keeps the five wireframe rows and editorial type scale',()=>{
+  const tree=AtlasPoster({})
+  const rows=tree.props.children[3]
+  assert.deepEqual(rows.map(row=>row.props.children.length),[4,5,6,7,8])
+  assert.deepEqual(rows.map(row=>row.props.children[0].props.children[0].props.r),[108,96,82,67,54])
+  const headline=find(tree,n=>n.type==='text'&&n.props.fontWeight==='760'&&n.props.x==='76')
+  assert.equal(headline.props.fontSize,88)
+  assert.ok(headline.props.y - headline.props.fontSize >= 179, 'the headline clears the portrait crop-safe top edge')
+  assert.doesNotMatch(text(tree),/PRIMEROS PASOS|GB \/ 01|BENGOCHEA \/ INVERSIONES|CONVERSEMOS/)
+})
+
+test('manual campaign actions are collapsed and explicitly separate from the four-week plan',async t=>{
+  const s=setup(t)
+  s.view.render(s.props);s.view.flush();await tick()
+  const tree=s.view.render(s.props)
+  const manual=find(tree,n=>n.type==='details'&&text(n).includes('Crear una pieza fuera del plan'))
+  assert.ok(manual)
+  assert.notEqual(manual.props.open,true)
+  assert.match(text(manual),/contenido suelto/)
+  assert.ok(button(manual,'Crear publicación↗'))
 })
 
 function panelSetup(t, {hasPlan=false}={}) {

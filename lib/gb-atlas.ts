@@ -1,0 +1,10 @@
+// Measurements from poster() in the supplied atlas.html, kept in native 4:5 units.
+export const GB_ATLAS_POLICY = `Las placas deben parecer de la misma colección que el atlas entregado, recoloreadas exclusivamente en azul oscuro, celeste y blanco. Conservá su escala, densidad, jerarquía editorial y geometría. No reemplaces el estilo por un título genérico con círculos aislados.
+En 1080 × 1350: márgenes laterales 72–78 px; título de dos líneas, Inter/Roboto/Arial, peso 760, 77–100 px, tracking -1.5 px; bajada de 22–26 px. Quitá los rótulos superiores, códigos de pieza y firmas o CTA al pie que quedarían tapados por controles o recortes de las redes. No copies los encabezados y pies del atlas fuera del área segura. Conservá el mensaje principal dentro del rectángulo seguro del formato; si falta espacio, omití metadatos secundarios en lugar de reducir el texto hasta volverlo ilegible. No inventes un logotipo.
+Plantilla 0: título arriba a la izquierda, disco central dominante de radio 383 px centrado en (544,676), bajada inferior derecha.
+Plantilla 1: semicírculo superior recortado de radio 568 px centrado en (540,242); título y bajada en el tercio inferior.
+Plantilla 2: título arriba y bajada debajo; cinco filas de esferas de alambre en progresión: 4,5,6,7,8 esferas, centros verticales 622,797,940,1062,1166 y radios 108,96,82,67,54 px. Cada esfera incluye tres elipses horizontales y tres verticales además del contorno.
+Plantilla 3: título grande superior; cuatro bandas de curvas elípticas horizontales densas, centradas en y=470,646,822,998; no sustituir por círculos aislados.
+Plantilla 4: fondo blanco con grilla fina y diagrama orbital arriba a la derecha, título grande abajo a la izquierda.
+Plantilla 5: fotografía autorizada en (72,82,936,755), panel azul oscuro inferior con título grande y línea celeste. Sin fotografía autorizada, elegir otra plantilla.
+Elegí la familia según el contenido y variá familias en carruseles. Adaptá proporciones al formato y desplazá elementos para respetar zonas seguras y evitar solapes. Las formas son conceptuales, no gráficos financieros con datos inventados.`

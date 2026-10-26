@@ -1,4 +1,5 @@
 import { appendEvent } from './journal'
+import { GB_MODEL } from './gb-generation'
 import { redactSecrets } from './auth-crypto'
 import { sanitizeSessionId } from './session-id'
 import type { StreamItem } from './events'
@@ -87,10 +88,12 @@ export function errorText(error: unknown): string {
 
 
 export function effectiveModel(host: SessionState): string {
+  if (host.gbContext) return GB_MODEL
   return host.preferredModel ?? process.env.FX0_MODEL ?? DEFAULT_MODEL
 }
 
 export function effectiveFast(host: SessionState): boolean {
+  if (host.gbContext) return false
   return host.preferredFast ?? false
 }
 

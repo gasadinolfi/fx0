@@ -577,6 +577,9 @@ test('GB generation carries campaign and tone across turns and updates only when
   const host=boundHost('gb-generation')
   await runtime.submitPrompt(host,'Ada','Prepará el guion de video')
   assert.match(f.sent[0].sessionOptions.instructions,/GB workspace behavior/)
+  assert.match(f.sent[0].sessionOptions.instructions,/Plantilla 2/)
+  assert.equal(f.sent[0].sessionOptions.model.id,'openai/gpt-6-luna')
+  assert.equal(f.sent[0].sessionOptions.model.fast,false)
   assert.match(f.sent[0].sessionOptions.instructions,/video scripts as text/)
   assert.match(f.sent[0].sessionOptions.instructions,/Voseo rioplatense/)
   assert.match(f.sent[0].sessionOptions.instructions,/Invertir empieza por entender/)
@@ -585,6 +588,20 @@ test('GB generation carries campaign and tone across turns and updates only when
   assert.match(f.sent[1].sessionOptions.instructions,/Guía v2 aceptada y adoptada/)
   assert.match(f.sent[0].sessionOptions.instructions,/Guía v1/)
   assert.equal(f.sent[1].id,f.sent[0].id)
+})
+
+test('GB locks existing chats to GPT 6 Luna and rejects model or fast-mode changes',async t=>{
+  const f=fixture(t,{preferredModel:'anthropic/old-model',preferredFast:true,preferredEffort:'high',designMd:{name:'GB',source:'gb:entender',sha:'gb',bytes:9},libfxSessionId:null})
+  f.gbContext='Mesa de trabajo GB'
+  const host=boundHost('gb-fixed-model')
+  assert.equal((await runtime.getSessionGenerationOptions(host)).model,'openai/gpt-6-luna')
+  assert.equal((await runtime.getSessionGenerationOptions(host)).fast,false)
+  assert.equal((await runtime.setSessionGeneration(host,{model:'openai/gpt-6.1-sol'})).ok,false)
+  assert.equal((await runtime.setSessionGeneration(host,{fast:true})).ok,false)
+  await runtime.submitPrompt(host,'Ada','Creá una placa')
+  assert.equal(f.sent[0].sessionOptions.model.id,'openai/gpt-6-luna')
+  assert.equal(f.sent[0].sessionOptions.model.fast,false)
+  assert.equal(f.sent[0].sessionOptions.model.effort,'high')
 })
 
 

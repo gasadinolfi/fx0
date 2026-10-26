@@ -1,5 +1,7 @@
 'use client'
 
+import { GB_MODEL_LABEL } from '../lib/gb-generation'
+
 import { Suspense, use, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { type GuestDraft } from './guest-draft'
 import { AuthRouteError, fetchUi } from './auth-ui'
@@ -952,7 +954,7 @@ export default function Composer({
               }}
             />
 
-            {trialRegion((isTrial) => isTrial ? (
+            {trialRegion((isTrial) => workspaceGb ? <Button variant="ghost" size="sm" disabled aria-label={`Model: ${GB_MODEL_LABEL}`} className="h-8 min-w-0 max-w-44 flex-1 justify-start px-2 text-sm font-normal text-muted-foreground"><span className="truncate">{GB_MODEL_LABEL}</span></Button> : isTrial ? (
               <Button variant="ghost" size="sm" disabled aria-label={`Model: ${trialLabel}`}
                 className="h-8 min-w-0 max-w-44 flex-1 justify-start px-2 text-sm font-normal text-muted-foreground">
                 <span className="truncate">{trialLabel}</span>

@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetCl
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import Markdown from './markdown'
 import { GB_PALETTE, GB_PALETTE_POLICY, gbGuideDownload } from '../lib/gb-palette'
+import GbAtlasPoster, { GB_ATLAS_BACKGROUNDS } from './gb-atlas-poster'
 import SocialFormatPicker from './social-format-picker'
 import { SOCIAL_FORMATS, socialPrompt, validSocialSize, type SocialFormat } from '../lib/social-formats'
 
@@ -129,25 +130,25 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
   return <section aria-label="Mesa de trabajo de Bengochea" className="gb-workbench border-b border-border px-4 py-4 sm:px-5">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3"><span className="gb-monogram" aria-hidden="true">GB</span><div><p className="text-sm font-semibold tracking-wide">BENGOCHEA</p><p className="text-xs text-muted-foreground">Mesa de trabajo · Privada</p></div></div>
-      {onOpenPlan && <Button id="gb-plan-toggle" variant="outline" size="sm" aria-expanded={planOpen} onClick={onOpenPlan}>Plan de 4 semanas</Button>}
+      {onOpenPlan && <Button id="gb-plan-toggle" variant={planOpen ? 'secondary' : 'default'} size="sm" aria-expanded={planOpen} onClick={onOpenPlan}>Plan de 4 semanas</Button>}
       <Button variant="ghost" size="sm" onClick={() => panel('guide')}>Guía e insumos{state?.proposal ? ' · 1 propuesta' : ''}</Button>
     </div>
     {!state ? <div className="py-5"><Skeleton className="h-8 w-4/5" /><Button variant="ghost" size="sm" onClick={() => void refresh().catch(e => setError(e.message))}>Volver a cargar</Button></div> : <>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <label className="sr-only" htmlFor="gb-campaign">Campaña</label>
-        <select id="gb-campaign" value={campaignId} disabled={!ready || busy} onChange={e => choose(e.target.value)} className="min-h-9 min-w-0 max-w-full flex-1 border border-input bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          {state.campaigns.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-        </select>
-        <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => panel('campaigns')}>Nueva campaña</Button>
-      </div>
       <div className="mt-3"><SocialFormatPicker value={socialFormat} onChange={changeFormat} onCommit={value => { if (value) adaptFormat(value, true) }} disabled={!ready || busy} /></div>
       {hasDesign && <p className="mt-2 text-xs text-muted-foreground">Cambiar red o formato adapta automáticamente la pieza. Las medidas personalizadas se aplican al terminar de editarlas.</p>}
-      {selected && <>
+      {selected && <details className="mt-4 border-t border-border pt-3"><summary className="cursor-pointer text-sm font-medium">Crear una pieza fuera del plan</summary><p className="mt-2 text-xs leading-5 text-muted-foreground">Estas acciones crean contenido suelto en esta conversación. Las 20 publicaciones del plan se generan desde la columna «Plan de 4 semanas».</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <label className="sr-only" htmlFor="gb-campaign">Campaña</label>
+          <select id="gb-campaign" value={campaignId} disabled={!ready || busy} onChange={e => choose(e.target.value)} className="min-h-9 min-w-0 max-w-full flex-1 border border-input bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {state.campaigns.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+          <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => panel('campaigns')}>Nueva campaña</Button>
+        </div>
         {empty ? <div className="gb-intro py-7"><p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">{selected.page ? `Propuesta del manual · Página ${selected.page}` : 'Campaña propia'}</p><h2 className="max-w-lg text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{selected.title}</h2><p className="mt-4 max-w-lg text-sm leading-6 text-muted-foreground">{selected.message} {selected.objective}</p></div> : <p className="mt-3 text-xs text-muted-foreground">{selected.message}</p>}
         <div className="mt-3 grid grid-cols-2 gap-2">{GB_ACTIONS.map((action, i) => <Button key={action.label} variant={i === 0 ? 'default' : 'outline'} disabled={!ready || busy || !validSocialSize(socialFormat)} className="h-auto min-h-10 justify-start whitespace-normal text-left text-xs sm:text-sm" onClick={() => onSend(i < 2 ? socialPrompt(action.prompt, socialFormat) : action.prompt)}>{action.label}<span className="ml-auto" aria-hidden="true">↗</span></Button>)}</div>
         {hasDesign && <Button variant="outline" size="sm" className="mt-3" disabled={!ready || busy || !validSocialSize(socialFormat)} onClick={() => adaptFormat(socialFormat)}>Adaptar pieza a este formato</Button>}
         {selected.guideId !== state.activeGuideId && <div className="mt-3 flex flex-wrap items-center gap-2"><p className="text-xs text-muted-foreground">Esta campaña conserva una guía anterior.</p><Button variant="ghost" size="sm" disabled={saving || busy} onClick={() => void mutate({ action: 'adopt', campaignId })}>Adoptar guía vigente</Button></div>}
-      </>}
+      </details>}
     </>}
     {error && <div role="alert" className="mt-3 text-sm text-destructive">{error} <Button variant="ghost" size="sm" onClick={() => void refresh().catch(e => setError(e.message))}>Recargar</Button></div>}
     <Sheet open={open} onOpenChange={setOpen}><SheetContent className="w-[min(96vw,760px)]">
@@ -193,17 +194,8 @@ export default function GbWorkbench({ sessionId, busy, empty, enabled, hasDesign
 export function GbBackgroundExamples() {
   return <section aria-label="Comparación de fondos de GB" className="flex flex-col gap-4">
     <p className="text-xs leading-5 text-muted-foreground">Misma placa, tres fondos permitidos. Ninguno es obligatorio para todas las publicaciones.</p>
-    {[
-      { name: 'Azul oscuro', background: GB_PALETTE.text, foreground: GB_PALETTE.background, line: GB_PALETTE.accent },
-      { name: 'Celeste', background: GB_PALETTE.accent, foreground: GB_PALETTE.text, line: GB_PALETTE.text },
-      { name: 'Blanco', background: GB_PALETTE.background, foreground: GB_PALETTE.text, line: GB_PALETTE.accent },
-    ].map(variant => <figure key={variant.name} className="flex flex-col gap-2">
-      <div style={{ backgroundColor: variant.background, color: variant.foreground }} className="flex aspect-[4/5] flex-col justify-between overflow-hidden border border-border p-6">
-        <p className="text-[10px] uppercase tracking-[0.2em]">Bengochea / Comunicación</p>
-        <h3 className="text-3xl font-semibold leading-tight tracking-tight">Invertir empieza por entender</h3>
-        <svg viewBox="0 0 300 150" className="w-full" fill="none" stroke={variant.line} strokeWidth="1" aria-hidden="true">{[80, 115, 150, 185, 220].map(x => <g key={x}><circle cx={x} cy="75" r="48" /><ellipse cx={x} cy="75" rx="18" ry="48" /></g>)}</svg>
-        <p style={{ borderColor: variant.line }} className="border-t pt-3 text-xs">BENGOCHEA · INVERSIONES</p>
-      </div>
+    {GB_ATLAS_BACKGROUNDS.map(variant => <figure key={variant.name} className="flex flex-col gap-2">
+      <GbAtlasPoster variant={variant} />
       <figcaption className="text-xs text-muted-foreground">{variant.name} · {variant.background}</figcaption>
     </figure>)}
   </section>
@@ -220,11 +212,8 @@ function GuideComparison({ before, after }: { before: string; after: string }) {
 export function GbEmptyPreview({ campaignId }: { campaignId: string | null }) {
   const title = GB_SEED_CAMPAIGNS.find(c => c.id === campaignId)?.title ?? 'Tu próxima idea'
   return <div className="flex flex-col gap-5" aria-label="Referencia visual de GB">
-    <div style={{ backgroundColor: GB_PALETTE.background, color: GB_PALETTE.text }} className="gb-reference-poster relative flex aspect-[4/5] flex-col justify-between overflow-hidden border border-border p-7">
-      <p className="text-[10px] uppercase tracking-[0.2em]">Bengochea / Comunicación</p>
-      <h2 className="relative max-w-xs text-3xl font-semibold leading-tight tracking-tight">{title}</h2>
-      <svg viewBox="0 0 300 190" className="w-full" style={{ color: GB_PALETTE.primary }} fill="none" stroke="currentColor" strokeWidth="0.7" aria-hidden="true">{[70,110,150,190,230].map((x,i)=><g key={x} opacity={1-i*.12}><circle cx={x} cy="95" r="56" /><ellipse cx={x} cy="95" rx="22" ry="56" /><ellipse cx={x} cy="95" rx="56" ry="20" /></g>)}</svg>
-      <p style={{ borderColor: GB_PALETTE.accent }} className="border-t pt-3 text-xs tracking-wide">BENGOCHEA · INVERSIONES</p>
+    <div style={{ backgroundColor: GB_PALETTE.background, color: GB_PALETTE.text }} className="gb-reference-poster overflow-hidden border border-border">
+      <GbAtlasPoster title={title} />
     </div>
     <p className="text-xs leading-5 text-muted-foreground">Referencia de estilo. Elegí una acción o contá tu idea; la pieza que creemos aparecerá acá.</p>
   </div>

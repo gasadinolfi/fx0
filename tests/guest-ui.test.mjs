@@ -187,6 +187,19 @@ test('GB auto adaptation can replace an invalid custom selection with a valid pr
   assert.equal(JSON.parse(posted.init.body).text,prompt)
 })
 
+test('GB shows GPT 6 Luna as a locked model instead of a model picker',t=>{
+  const ui=browser(t,{'/api/events?session=saved&after=0':()=>new Response(new ReadableStream({start(controller){controller.close()}}))})
+  const app=mount(t,ui,{...guestBoot,user:{id:'owner',name:'Owner'},sessionId:'saved'},{gb:true})
+  const composer=find(app.render(),node=>node.type===Composer)
+  assert.ok(composer)
+  const view=renderHooks(Composer.render??Composer)
+  const tree=view.render(composer.props)
+  const label=find(tree,node=>node.props?.['aria-label']==='Model: GPT 6 Luna')
+  assert.ok(label)
+  assert.equal(label.props.disabled,true)
+  view.cleanup()
+})
+
 test('a trial guest sends without sign-in or draft reservation and updates the remaining allowance', async (t) => {
   t.mock.method(console, 'info', () => {})
   const ui = browser(t, {

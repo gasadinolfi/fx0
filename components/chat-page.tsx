@@ -4,6 +4,7 @@ import { after, connection } from 'next/server.js'
 import ChatApp, { type AccountBoot, type ChatBoot } from '../components/chat-app'
 import type { PagePreference } from '../components/composer'
 import { DEFAULT_MODEL } from '../lib/session'
+import { GB_MODEL } from '../lib/gb-generation'
 import { readSession, readTranscript } from '../lib/journal'
 import { AuthError, assertSessionOwner, validSessionId } from '../lib/accounts'
 import { publicUser, requireUserSession } from '../lib/auth'
@@ -68,5 +69,5 @@ export default function ChatPage({ searchParams, gb = false }: { searchParams: P
   const account = loadAccount()
   const sidebar = account.then(({ user }) => user && user.id !== 'guest:new' ? listOwnedSessions(user.id) : { sessions: [], nextCursor: null })
   const boot = loadChat(account, searchParams, gb)
-  return <ChatApp gb={gb} account={account} sidebar={sidebar} boot={boot} preference={loadPreference(boot)} defaultModel={process.env.FX0_MODEL ?? DEFAULT_MODEL} />
+  return <ChatApp gb={gb} account={account} sidebar={sidebar} boot={boot} preference={loadPreference(boot)} defaultModel={gb ? GB_MODEL : process.env.FX0_MODEL ?? DEFAULT_MODEL} />
 }

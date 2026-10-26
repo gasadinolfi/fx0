@@ -14,6 +14,7 @@ import { checkBotId } from 'botid/server'
 import { trialEnabled, trialIpHash, trialStore, type TrialCredential, type TrialReservation } from '../../../lib/trial'
 import { TRIAL_MODEL, usesFreePrompts } from '../../../lib/trial-policy'
 import { DEFAULT_MODEL } from '../../../lib/session'
+import { GB_MODEL } from '../../../lib/gb-generation'
 
 export const maxDuration = 800
 
@@ -108,9 +109,9 @@ export const POST = withPromptRoute(async (request, context) => {
       ? await catalogDesignMd(designRequest.option.id, designRequest.option.name)
       : designRequest.upload
   const initial = {
-    preferredModel: typeof generation.model === 'string' && generation.model.trim() ? generation.model.trim().slice(0, 200) : null,
+    preferredModel: gbCampaignId ? GB_MODEL : typeof generation.model === 'string' && generation.model.trim() ? generation.model.trim().slice(0, 200) : null,
     preferredEffort: typeof generation.effort === 'string' && generation.effort.trim() ? generation.effort.trim().slice(0, 32) : null,
-    preferredFast: typeof generation.fast === 'boolean' ? generation.fast : null,
+    preferredFast: gbCampaignId ? false : typeof generation.fast === 'boolean' ? generation.fast : null,
     designMd: gbCampaignId ? { name: 'Bengochea DESIGN.md', source: `gb:${gbCampaignId}`, text: gbGuideText } : designMd,
   }
   const guest = 'kind' in session
