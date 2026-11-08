@@ -1092,6 +1092,16 @@ test('publish with Drop opens Vercel Drop inside the click, before the design lo
   assert.equal(DROP_URL, 'https://vercel.com/drop')
 })
 
+test('MP4 export is opt-in, so the normal flow can offer it without changing GB', async (t) => {
+  browser(t)
+  const { default: DesignExport } = await import(pathToFileURL(join(output, 'components/design-export.js')).href)
+  const props = { sessionId: 'chat-1', revision: null, latest: 2, title: 'Motion', onNotice() {} }
+  const withoutVideo = renderHooks(DesignExport).render(props)
+  assert.equal(find(withoutVideo, node => node.props?.children === 'Descargar MP4'), null)
+  const withVideo = renderHooks(DesignExport).render({ ...props, video: true })
+  assert.ok(find(withVideo, node => node.props?.children === 'Descargar MP4'))
+})
+
 // Sign-out intentionally closes this document's shared auth gate until reload.
 test('signout immediately clears the app, fences late boot data and offers retry on failure', async (t) => {
   const response = Promise.withResolvers()

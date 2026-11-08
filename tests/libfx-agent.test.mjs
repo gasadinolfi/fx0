@@ -20,7 +20,7 @@ registerHooks({ resolve(specifier, context, next) {
   }
   return next(specifier, context)
 } })
-const { durableAgent, runSubagent, turnModelStep, STEP_LIMIT, SIGN_IN_AGAIN } = await import('../lib/libfx-agent.ts')
+const { durableAgent, runSubagent, turnModelStep, limitModelContext, MAX_CONTEXT_USER_MESSAGES, STEP_LIMIT, SIGN_IN_AGAIN } = await import('../lib/libfx-agent.ts')
 const { MAX_TURN_MODEL_STEPS } = await import('../lib/session.ts')
 
 const MODEL_URL = 'https://ai-gateway.vercel.sh/v3/ai/language-model'
@@ -204,6 +204,28 @@ test('a turn\'s step is the assistant messages since the last user message, plus
   assert.equal(turnModelStep({ prompt: [{ role: 'user' }, { role: 'assistant' }, { role: 'tool' }, { role: 'assistant' }, { role: 'tool' }] }), 3)
   assert.equal(turnModelStep({ prompt: [{ role: 'user' }, { role: 'assistant' }, { role: 'user' }, { role: 'assistant' }] }), 2)
   assert.equal(turnModelStep({}), 1)
+})
+
+test('model context keeps only the latest user groups while preserving durable history', async (t) => {
+  const prompt = [
+    { role: 'system', content: 'instructions' },
+    ...Array.from({ length: MAX_CONTEXT_USER_MESSAGES + 3 }, (_, index) => [
+      { role: 'user', content: `user-${index}` },
+      { role: 'assistant', content: `assistant-${index}` },
+      { role: 'tool', content: `tool-${index}` },
+    ]).flat(),
+  ]
+  const limited = limitModelContext({ prompt })
+  assert.deepEqual(limited.prompt.map(message => message.role === 'user' ? message.content : null).filter(Boolean),
+    Array.from({ length: MAX_CONTEXT_USER_MESSAGES }, (_, index) => `user-${index + 3}`))
+  assert.equal(limited.prompt[0].role, 'system')
+  assert.equal(limited.prompt.at(-1).content, `tool-${MAX_CONTEXT_USER_MESSAGES + 2}`)
+
+  stored.set('chat-a', credential('token-a'))
+  let sent
+  t.mock.method(globalThis, 'fetch', async (_url, init) => { sent = JSON.parse(init.body); return Response.json({}) })
+  assert.equal((await modelRequest('wrun_a', prompt)).status, 200)
+  assert.deepEqual(sent, limited)
 })
 
 test('Gateway\'s own reason survives a rejection, scrubbed of the credential', async (t) => {

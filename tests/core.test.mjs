@@ -464,6 +464,8 @@ test('design artifact validation accepts inline CSS, JavaScript, Canvas, data as
   })
   const cited = documentWith('<p>Source: <a href="https://vercel.com/blog">Vercel blog</a></p>')
   assert.deepEqual(validateDesignArtifactHtml(cited), { ok: true, bytes: Buffer.byteLength(cited) })
+  const googleFont = documentWith('', '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">')
+  assert.deepEqual(validateDesignArtifactHtml(googleFont), { ok: true, bytes: Buffer.byteLength(googleFont) })
   assert.match(prepareDesignArtifactHtml(cited, DESIGN_ARTIFACT_EMBEDDED_CSP, 'ready-token'), /type:"open",token,url/)
   const prepared = prepareDesignArtifactHtml(interactive)
   assert.match(prepared, /^<!doctype html><script>/i)
@@ -567,7 +569,9 @@ test('design artifact CSP allows isolated inline scripts and denies ambient capa
   assert.match(DESIGN_ARTIFACT_EMBEDDED_CSP, /connect-src 'none'/)
   assert.match(DESIGN_ARTIFACT_EMBEDDED_CSP, /worker-src 'none'/)
   assert.match(DESIGN_ARTIFACT_EMBEDDED_CSP, /style-src 'unsafe-inline'/)
-  assert.doesNotMatch(DESIGN_ARTIFACT_EMBEDDED_CSP, /allow-same-origin|https?:|style-src[^;]*\*/)
+  assert.match(DESIGN_ARTIFACT_EMBEDDED_CSP, /style-src 'unsafe-inline' https:\/\/fonts\.googleapis\.com/)
+  assert.match(DESIGN_ARTIFACT_EMBEDDED_CSP, /font-src data: https:\/\/fonts\.gstatic\.com/)
+  assert.doesNotMatch(DESIGN_ARTIFACT_EMBEDDED_CSP, /allow-same-origin|style-src[^;]*\*/)
 })
 
 test('design artifact validation rejects fragments and oversized documents', () => {

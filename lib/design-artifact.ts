@@ -3,9 +3,9 @@ export const MAX_DESIGN_ARTIFACT_BYTES = 512 * 1024
 export const DESIGN_ARTIFACT_EMBEDDED_CSP = [
   "default-src 'none'",
   "script-src 'unsafe-inline'",
-  "style-src 'unsafe-inline'",
+  "style-src 'unsafe-inline' https://fonts.googleapis.com",
   'img-src data:',
-  'font-src data:',
+  'font-src data: https://fonts.gstatic.com',
   'media-src data:',
   "connect-src 'none'",
   "child-src 'none'",
@@ -191,9 +191,10 @@ function validateTag(tag: HtmlTag): string | null {
     if (name === 'href' || name === 'xlink:href') {
       const value = decodeAttribute(rawValue)
       const isSafeSvgImage = tag.name === 'image' && /^data:image\//i.test(value)
+      const isGoogleFont = tag.name === 'link' && name === 'href' && tag.attributes.get('rel')?.toLowerCase() === 'stylesheet' && /^https:\/\/fonts\.googleapis\.com\/css2?\?/i.test(value)
       // Links to https pages (cited sources, references) open in a new tab; see the bootstrap.
       const isExternalLink = tag.name === 'a' && name === 'href' && /^https:\/\/[^\s]+$/i.test(value)
-      if (!value.startsWith('#') && !isSafeSvgImage && !isExternalLink) {
+      if (!value.startsWith('#') && !isSafeSvgImage && !isExternalLink && !isGoogleFont) {
         return `design artifact ${name} values must be local fragments, https links, or compatible embedded data: URLs`
       }
     }

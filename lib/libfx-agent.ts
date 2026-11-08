@@ -29,6 +29,26 @@ export interface TurnContext {
 
 export const STEP_LIMIT = `Turn stopped after ${MAX_TURN_MODEL_STEPS} model steps. Send a message to continue.`
 export const SIGN_IN_AGAIN = 'Sign in again to continue this chat, then resend.'
+export const MAX_CONTEXT_USER_MESSAGES = 8
+
+// Keep durable sessions and the visible transcript complete, but bound what each
+// model request receives. A user message starts a conversation group, so slicing
+// at one preserves all assistant/tool messages that belong to the retained input.
+export function limitModelContext(body: unknown): unknown {
+  const prompt = (body as { prompt?: unknown })?.prompt
+  if (!Array.isArray(prompt)) return body
+  const userIndexes: number[] = []
+  for (let index = 0; index < prompt.length; index++) {
+    if ((prompt[index] as { role?: unknown })?.role === 'user') userIndexes.push(index)
+  }
+  if (userIndexes.length <= MAX_CONTEXT_USER_MESSAGES) return body
+  const cutoff = userIndexes[userIndexes.length - MAX_CONTEXT_USER_MESSAGES]
+  const instructions = prompt.slice(0, cutoff).filter(message => {
+    const role = (message as { role?: unknown })?.role
+    return role === 'system' || role === 'developer'
+  })
+  return { ...(body as Record<string, unknown>), prompt: [...instructions, ...prompt.slice(cutoff)] }
+}
 
 // The chat-specific pieces the agent asks for per call. agent.ts provides them;
 // they live there because they read and write the chat's journal state.
@@ -80,9 +100,19 @@ function chatFetch(
     const id = await chatId()
     const url = new URL(input instanceof Request ? input.url : String(input))
     const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase()
+    let requestInit = init
     if (method === 'POST' && url.pathname.endsWith('/language-model') && typeof init?.body === 'string') {
       let step = 1
-      try { step = turnModelStep(JSON.parse(init.body)) } catch { /* libfx validates its own body */ }
+      try {
+        const body = JSON.parse(init.body)
+        step = turnModelStep(body)
+        const limited = limitModelContext(body)
+        if (limited !== body) {
+          const headers = new Headers(init.headers)
+          headers.delete('content-length')
+          requestInit = { ...init, headers, body: JSON.stringify(limited) }
+        }
+      } catch { /* libfx validates its own body */ }
       if (step > MAX_TURN_MODEL_STEPS) {
         log(id ?? 'unknown', 'turn:step-limit', { steps: MAX_TURN_MODEL_STEPS })
         return jsonError(400, STEP_LIMIT)
@@ -103,7 +133,7 @@ function chatFetch(
       observer = draft
     }
     try {
-      return await gatewayFetch(gateway, fetch, observer)(input, init)
+      return await gatewayFetch(gateway, fetch, observer)(input, requestInit)
     } catch (error) {
       // No stored credential, or one too close to expiry to start a request.
       if (error instanceof AuthError) return gateway.gatewaySession && 'kind' in gateway.gatewaySession

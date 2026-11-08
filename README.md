@@ -114,7 +114,7 @@ You can watch this happen. Open session diagnostics from the header to see the c
 - A design being written streams through a bounded, expiring Redis channel, so viewers on other instances can see it too. Reconnecting resumes from the full prefix; generation IDs and offsets prevent duplicated bytes. The provisional preview strips active markup and runs without scripts. Publishing or ending a turn closes its draft before it can replace the finished preview.
 - Deleting a chat removes fx0's records and credential. libfx's session data expires with the World's retention.
 - When no route follows a chat, its transcript catches up the next time someone opens it.
-- Transcripts are never trimmed, so very long chats get slower to open.
+- Transcripts and saved versions are never trimmed. Model calls receive only the current conversation tail (the latest eight user inputs with their assistant/tool messages), so old chat content stays visible without being resent on every call. Very long chats can still get slower to open.
 
 ## Where things are
 

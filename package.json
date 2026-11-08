@@ -34,6 +34,7 @@
     "iron-session": "^9.0.1",
     "jose": "^6.2.12",
     "libfx": "0.0.14",
+    "mediabunny": "^1.65.2",
     "next": "^16.4.0",
     "next-themes": "^0.4.6",
     "pdfjs-dist": "^5.7.284",

@@ -38,6 +38,7 @@ export default function DesignExport({
   latest,
   title,
   onNotice,
+  video = false,
 }: {
   ref?: Ref<DesignExportHandle>
   sessionId: string
@@ -45,6 +46,7 @@ export default function DesignExport({
   latest: number
   title: string | null | undefined
   onNotice: (notice: Notice) => void
+  video?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
@@ -153,6 +155,22 @@ export default function DesignExport({
     }
   }
 
+  async function downloadVideo() {
+    if (renderingRef.current) return
+    renderingRef.current = true; setRendering(true); setOpen(false)
+    onNotice({ tone: 'status', text: 'Renderizando MP4… Puede demorar varios minutos.' })
+    try {
+      const [html, { renderDesignVideo }] = await Promise.all([load(), import('./design-video')])
+      const blob = await renderDesignVideo(html, exportFormat ? { size: { width: exportFormat.width, height: exportFormat.height } } : {})
+      const fileName = `${designFileName(title).replace(/\.html$/, '')}${exportFormat ? `-${exportFormat.id}-${exportFormat.width}x${exportFormat.height}` : ''}.mp4`
+      const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = fileName
+      document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      onNotice({ tone: 'status', text: `Descargado ${fileName}.` })
+    } catch (error) {
+      if (!(error instanceof AuthRouteError)) onNotice({ tone: 'error', text: error instanceof Error ? error.message : 'No se pudo exportar el MP4.' })
+    } finally { renderingRef.current = false; setRendering(false) }
+  }
+
   useImperativeHandle(ref, () => ({ downloadPlates: (format, piece) => downloadImage(format, piece, true) }))
 
   // Vercel Drop deploys files dropped onto its page and takes none from another site,
@@ -229,6 +247,9 @@ export default function DesignExport({
             {rendering ? 'Exportando…' : `Descargar ${format.toUpperCase()}`}
           </Button>
         ))}
+        {video && <Button variant="ghost" size="sm" disabled={rendering || (exportFormat !== null && !validSocialSize(exportFormat))} {...fastClick(() => void downloadVideo())} className="w-full justify-start">
+          {rendering ? 'Exportando…' : 'Descargar MP4'}
+        </Button>}
         <button
           type="button"
           // A plain click, not fastClick: only the click grants a touch or pen tap the

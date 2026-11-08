@@ -11,6 +11,7 @@ const nextConfig = {
     '/api/prompt': ['./lib/design-md/*.md', './lib/gb/DESIGN.md', './lib/gb/reference/*'],
     '/api/gb': ['./lib/gb/DESIGN.md', './lib/gb/reference/*', './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'],
     '/api/image-renderer': ['./node_modules/html2canvas-pro/dist/html2canvas-pro.min.js'],
+    '/api/video-renderer': ['./node_modules/mediabunny/dist/bundles/mediabunny.cjs'],
   },
   env: {
     NEXT_PUBLIC_FX0_FREE_PROMPTS: process.env.FX0_FREE_PROMPTS === '1' ? '1' : '0',

@@ -1944,6 +1944,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
                   latest={view.snapshot.transcript.view.artifactRevision}
                   title={sessions.find((session) => session.id === view.sessionId)?.title}
                   onNotice={setInteractionNotice}
+                  video={!gb}
                 />
               ))}
 
