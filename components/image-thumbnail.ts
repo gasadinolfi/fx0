@@ -21,3 +21,30 @@ export async function imageThumbnail(src: string, maxSide = 320): Promise<string
     return null
   }
 }
+
+// A larger, bounded copy that the design agent may embed in the generated HTML.
+// Keeping the complete asset under 360 KiB leaves room inside the 512 KiB artifact.
+export async function imageDesignAsset(src: string, maxSide = 1920, maxLength = 360 * 1024): Promise<{ data: string; mimeType: string } | null> {
+  try {
+    const image = new Image()
+    image.src = src
+    await image.decode()
+    let scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight))
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(2, Math.round(image.naturalWidth * scale / 2) * 2)
+      canvas.height = Math.max(2, Math.round(image.naturalHeight * scale / 2) * 2)
+      const context = canvas.getContext('2d')
+      if (!context) return null
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+      const url = canvas.toDataURL('image/webp', Math.max(0.5, 0.9 - attempt * 0.07))
+      if (url.length <= maxLength) {
+        return { mimeType: 'image/webp', data: url.slice(url.indexOf(',') + 1) }
+      }
+      scale *= 0.82
+    }
+    return null
+  } catch {
+    return null
+  }
+}

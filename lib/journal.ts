@@ -100,6 +100,7 @@ export interface DurablePrompt {
   clientId?: string
   images?: DurablePromptImage[]
   previews?: string[]
+  designImages?: { data: string; mimeType: string }[]
 }
 
 // The turn libfx is running, as the projector last saw it: the message that
@@ -183,6 +184,12 @@ redis.call('HSET', KEYS[5], 'trialChat', trial)
 if event.text and event.text ~= '' then
   redis.call('HSETNX', KEYS[5], 'title', string.sub(event.text, 1, 40))
 end
+if ARGV[8] ~= '' then
+  redis.call('HSET', KEYS[8], tostring(id), ARGV[8])
+  for _, field in ipairs(redis.call('HKEYS', KEYS[8])) do
+    if tonumber(field) and tonumber(field) < id - 3 then redis.call('HDEL', KEYS[8], field) end
+  end
+end
 return cjson.encode({id = id, event = event, idle = idle, trialChat = trial == '1'})
 `
 
@@ -220,6 +227,7 @@ export async function submitPrompt(
       key(sessionId, 'message-seq'), key(sessionId, 'event-seq'), key(sessionId, 'events'),
       key(sessionId, 'deleting'), key(sessionId, 'state'), key(sessionId, 'design-md'),
       key(sessionId, 'active'),
+      key(sessionId, 'input-images'),
     ],
     [
       String(now),
@@ -234,6 +242,7 @@ export async function submitPrompt(
       // Wrapped so the client's JSON auto-parsing can never turn the text into a value.
       design ? JSON.stringify({ text: design.text }) : '',
       sponsored ? '1' : '0',
+      prompt.designImages?.length ? JSON.stringify(prompt.designImages) : '',
     ],
   )
   if (raw === false || raw === null) throw new SessionCleanupError()
@@ -241,6 +250,12 @@ export async function submitPrompt(
   if (result.error === 'not_trial_chat') throw new AuthError(409, 'Free prompts are available in a new design')
   announce(sessionId, result.event)
   return { id: result.id, event: result.event, idle: result.idle === true, trialChat: result.trialChat === true }
+}
+
+export async function readPromptDesignImages(sessionId: string, turnId: number): Promise<{ data: string; mimeType: string }[]> {
+  const raw = await redis().hget<unknown>(key(sessionId, 'input-images'), String(turnId))
+  if (raw == null) return []
+  return typeof raw === 'string' ? parseJson<{ data: string; mimeType: string }[]>(raw) : raw as { data: string; mimeType: string }[]
 }
 
 const APPEND_EVENT = INIT_STATE + `
@@ -427,6 +442,7 @@ const SESSION_PARTS = [
   'design-md',
   'event-seq',
   'events',
+  'input-images',
   'message-seq',
   'projected',
   'question-seq',

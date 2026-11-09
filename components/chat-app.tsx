@@ -26,7 +26,7 @@ import Composer, { type AttachedImage, type ComposerHandle, type PagePreference,
 import SignInDialog from './sign-in-dialog'
 import { clearGuestDraft, saveGuestDraft, takeGuestDraft } from './guest-draft'
 import { invalidateCached } from './cached-fetch'
-import { imageThumbnail } from './image-thumbnail'
+import { imageDesignAsset, imageThumbnail } from './image-thumbnail'
 import dynamic from 'next/dynamic.js'
 import type { LocalLogEntry } from './debug-panel'
 import NewChat from './new-chat'
@@ -1315,9 +1315,12 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
     }
 
     try {
-      const previews = images.length
-        ? (await Promise.all(images.map((image) => imageThumbnail(image.preview)))).filter((preview): preview is string => !!preview)
-        : []
+      const [previews, designImages] = images.length
+        ? await Promise.all([
+            Promise.all(images.map((image) => imageThumbnail(image.preview))).then(values => values.filter((preview): preview is string => !!preview)),
+            Promise.all(images.map((image) => imageDesignAsset(image.preview))).then(values => values.filter((asset): asset is { data: string; mimeType: string } => !!asset)),
+          ])
+        : [[], []]
       const promptSession = !creating ? targetSession : reservedId ?? 'new'
       const response = await fetchUi(`/api/prompt?session=${encodeURIComponent(promptSession)}`, {
         method: 'POST',
@@ -1329,6 +1332,7 @@ export default function ChatApp({ account, sidebar, boot, preference, defaultMod
           clientId,
           afterSeq,
           images: images.length ? images.map(({ data, mimeType }) => ({ type: 'image', data, mimeType })) : undefined,
+          designImages: designImages.length ? designImages : undefined,
           previews: previews.length ? previews : undefined,
           generation: firstGeneration
             ? { model: firstGeneration.model || null, effort: firstGeneration.effort || null, fast: firstGeneration.fast }

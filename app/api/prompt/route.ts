@@ -35,6 +35,7 @@ export const POST = withPromptRoute(async (request, context) => {
     clientId?: unknown
     afterSeq?: unknown
     images?: unknown
+    designImages?: unknown
     previews?: unknown
     generation?: { model?: unknown; effort?: unknown; fast?: unknown }
     gb?: { campaignId?: unknown; postId?: unknown; format?: unknown }
@@ -78,6 +79,10 @@ export const POST = withPromptRoute(async (request, context) => {
           i?.type === 'image' && typeof i?.data === 'string' && typeof i?.mimeType === 'string',
       )
     : undefined
+  const designImages = Array.isArray(body?.designImages)
+    ? body.designImages.filter((image): image is { data: string; mimeType: string } =>
+      image && typeof image.data === 'string' && image.mimeType === 'image/webp' && /^[A-Za-z0-9+/=]+$/.test(image.data))
+    : []
   if (!text && !images?.length) return Response.json({ error: 'empty prompt' }, { status: 400 })
   if ((images?.length ?? 0) > 8) return Response.json({ error: 'prompt cannot contain more than 8 images' }, { status: 413 })
   let imageBytes = 0
@@ -89,6 +94,9 @@ export const POST = withPromptRoute(async (request, context) => {
   }
   if (imageBytes > MAX_DURABLE_IMAGE_BYTES) {
     return Response.json({ error: 'prompt images exceed the 3 MiB limit' }, { status: 413 })
+  }
+  if (designImages.length > (images?.length ?? 0) || designImages.reduce((total, image) => total + image.data.length, 0) > 400 * 1024) {
+    return Response.json({ error: 'design images exceed the artifact limit' }, { status: 413 })
   }
 
   // Thumbnails persisted with the user's event so a reload still shows the images.
@@ -162,6 +170,7 @@ export const POST = withPromptRoute(async (request, context) => {
       previews.length ? previews : undefined,
       funding,
       'kind' in session ? undefined : session,
+      designImages.length ? designImages : undefined,
     )
   } catch (error) {
     if (planAttempt && typeof body.gb?.postId === 'string') await failGbPlanPost(user.id, body.gb.postId, planAttempt).catch(() => console.error('[gb] could not mark failed publication'))

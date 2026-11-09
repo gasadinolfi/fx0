@@ -9,7 +9,7 @@ const journalNames = [
   'answerActiveQuestion', 'appendEvent', 'bindLibfxSession', 'chatOfLibfxSession', 'claimSessionCleanup',
   'clearActiveQuestion', 'clearActiveTurn', 'currentSeq', 'emitLive', 'finishSessionCleanup', 'getActiveQuestion',
   'getActiveTurn', 'nextQuestionId', 'projectEvents', 'projectedCursor', 'publishDesignArtifact', 'readDesignArtifact',
-  'readDesignMd', 'readEvents', 'readSession', 'readSessionView', 'releaseSessionCleanup', 'renewSessionCleanup',
+  'readDesignMd', 'readEvents', 'readPromptDesignImages', 'readSession', 'readSessionView', 'releaseSessionCleanup', 'renewSessionCleanup',
   'setActiveQuestion', 'setActiveTurn', 'submitPrompt', 'takeAnswer', 'updateSession',
 ]
 const dataUrl = (source) => `data:text/javascript,${encodeURIComponent(source)}`
@@ -92,6 +92,7 @@ function fixture(t, stored = { preferredModel: null, preferredEffort: null, pref
     sent: [],
     acceptError: null,
     needsRenewal: false,
+    designImages: [],
     setActive: (value) => { active = value },
     setArtifactRevision: (value) => { artifactRevision = value },
     logOf(id) { if (!logs.has(id)) logs.set(id, sessionLog()); return logs.get(id) },
@@ -101,6 +102,7 @@ function fixture(t, stored = { preferredModel: null, preferredEffort: null, pref
       readSessionView: async () => ({ artifactRevision }),
       readDesignArtifact: async () => '<!doctype html><html><head></head><body>old</body></html>',
       readDesignMd: async () => 'Use teal.',
+      readPromptDesignImages: async () => state.designImages,
       submitPrompt: async (_id, prompt, _initial, sponsored = false) => {
         if (messageSeq === 0 && sponsored) state.stored = { ...state.stored, trialChat: true }
         const id = ++messageSeq
@@ -367,6 +369,7 @@ test('the agent offers HTML and common tools only; a tool runs on the chat its t
   const names = f.agentOptions.tools.map((tool) => tool.name)
   assert.deepEqual(names, ['read_design', 'publish_design', 'edit_design', 'web_fetch', 'ask_user_question', 'read_tool_result', 'capability_search', 'save_gb_plan', 'subagent', 'web_search'])
   const edit = f.agentOptions.tools.find((tool) => tool.name === 'edit_design')
+  const publish = f.agentOptions.tools.find((tool) => tool.name === 'publish_design')
   assert.equal(edit.idempotent, false)
   assert.equal(edit.writes, true)
   assert.equal(f.agentOptions.tools.find((tool) => tool.name === 'read_design').idempotent, true)
@@ -375,6 +378,9 @@ test('the agent offers HTML and common tools only; a tool runs on the chat its t
   const result = await edit.execute({ edits: [{ old_string: 'old', new_string: 'new' }, { old_string: '<body>', new_string: '<body class="x">' }] }, ctx)
   assert.equal(result.ok, true)
   assert.deepEqual(f.calls.filter((call) => call[0] === 'publish'), [['publish', 'tool-chat', '<!doctype html><html><head></head><body class="x">new</body></html>', 4]])
+  f.designImages = [{ mimeType: 'image/webp', data: 'YWJj' }]
+  await publish.execute({ html: '<!doctype html><html><head></head><body><img src="fx0-image:1"></body></html>' }, ctx)
+  assert.deepEqual(f.calls.at(-1), ['publish', 'tool-chat', '<!doctype html><html><head></head><body><img src="data:image/webp;base64,YWJj"></body></html>', 4])
   await assert.rejects(edit.execute({ edits: [] }, { ...ctx, context: undefined }), /without its chat context/)
 })
 
